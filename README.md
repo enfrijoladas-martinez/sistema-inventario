@@ -1,4 +1,4 @@
-# Sistema de Inventario - Agromundo 📦
+# Sistema de Inventario 
 
 Proyecto desarrollado para la carrera de **Ingeniería en Sistemas**. Este sistema permite la gestión eficiente de clientes e inventarios mediante una interfaz profesional
 
