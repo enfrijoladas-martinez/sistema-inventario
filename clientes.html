@@ -20,6 +20,38 @@
     <!-- Custom styles for this template-->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
 
+    <style>
+    #modalCategoriasCliente {
+        z-index: 1065;
+    }
+
+    #modalCategoriasCliente .modal-dialog {
+        z-index: 1070;
+    }
+
+    #modalNuevoCliente {
+        z-index: 1050;
+    }
+    .ventana-secundaria-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.25);
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ventana-secundaria-contenido {
+        width: 100%;
+        max-width: 620px;
+        background: #fff;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+    }
+</style>
+
 </head>
 
 <body id="page-top">
@@ -88,8 +120,8 @@
                     <form
                         class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
                         <div class="input-group">
-                            <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..."
-                                aria-label="Search" aria-describedby="basic-addon2">
+                            <input id="buscarClientes" type="text" class="form-control bg-light border-0 small" placeholder="Buscar clientes..."
+                            aria-label="Buscar" aria-describedby="basic-addon2">
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button">
                                     <i class="fas fa-search fa-sm"></i>
@@ -289,7 +321,7 @@
     
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Directorio de clientes</h6>
-        <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNuevoProducto">
+        <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNuevoCliente">
     <i class="fas fa-plus fa-sm text-white-50"></i> Agregar Nuevo Cliente
 </a>
     </div>
@@ -305,8 +337,7 @@
                         <th>Apellido materno</th>
                         <th>Teléfono</th>
                         <th>Email</th>
-                        <th>Categoria</th>
-                        <th style="width: 100px;">Acciones</th> </tr>
+                        <th style="width: 100px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -317,10 +348,10 @@
                         <td>Rodriguez</td>
                         <td>+52 123 456 7890</td>
                         <td>claudia.ortiz@ejemplo.com</td>
-                        <td><span class="badge badge-success">2</span></td>
                         <td>
-                            <button class="btn btn-warning btn-circle btn-sm" title="Editar"><i class="fas fa-pen"></i></button>
-                            <button class="btn btn-danger btn-circle btn-sm" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle"><i class="fas fa-eye"></i></button>
+                            <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                     <tr>
@@ -330,10 +361,10 @@
                         <td>Mendoza</td>
                         <td>+52 987 654 3210</td>
                         <td>carlos.garcia@ejemplo.com</td>
-                        <td><span class="badge badge-warning">1</span></td>
                         <td>
-                            <button class="btn btn-warning btn-circle btn-sm" title="Editar"><i class="fas fa-pen"></i></button>
-                            <button class="btn btn-danger btn-circle btn-sm" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle"><i class="fas fa-eye"></i></button>
+                            <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 </tbody>
@@ -389,58 +420,86 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalNuevoProducto" tabindex="-1" role="dialog" aria-labelledby="tituloModal" aria-hidden="true">
+    <div class="modal fade" id="modalNuevoCliente" tabindex="-1" role="dialog" aria-labelledby="tituloModal" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="tituloModal">Registrar Nuevo Cliente</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
             <div class="modal-body">
                 <form id="formularioCliente">
                     <div class="form-group">
                         <label for="codigoCli">Folio</label>
                         <input type="text" class="form-control" id="codigoCli" placeholder="Ej. CLI-001">
                     </div>
-                    <div class="form-group">
-                        <label for="nombreCli">Nombre del Cliente</label>
-                        <input type="text" class="form-control" id="nombreCli" placeholder="Ej. Juan Pérez">
-                    </div>
-                    <div class="form-group">
-                        <label for="apellidoPaterno">Apellido Paterno</label>
-                        <input type="text" class="form-control" id="apellidoPaterno" placeholder="Ej. García">
-                    </div>
-                    <div class="form-group">
-                        <label for="apellidoMaterno">Apellido Materno</label>
-                        <input type="text" class="form-control" id="apellidoMaterno" placeholder="Ej. López">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="categoriaCli">Categoría</label>
-                            <select id="categoriaCli" class="form-control">
-                                <option selected>Elegir...</option>
-                                <option>Solar</option>
-                                <option>Agua</option>
-                                <option>Ganado</option>
-                            </select>
-                        </div>
-                    <div class="form-group">
-                        <label for="telefonoCli">Teléfono</label>
-                        <input type="number" class="form-control" id="telefonoCli" placeholder="Ej. +52 123 456 7890">
-                        </div>
-                    </div>
 
                     <div class="form-group">
-                        <label for="emailCli">Email</label>
-                        <input type="email" class="form-control" id="emailCli" placeholder="ejemplo@dominio.com">
-                    </div>
-                </form>
+                        <label for="nombreCli">Nombre del Cliente</label>
+                        <input type="text" class="form-control" id="nombreCli" placeholder="Ej. Juan">
+    </div>
+
+    <div class="form-group">
+        <label for="apellidoPaterno">Apellido Paterno</label>
+        <input type="text" class="form-control" id="apellidoPaterno" placeholder="Ej. García">
+    </div>
+
+    <div class="form-group">
+        <label for="apellidoMaterno">Apellido Materno</label>
+        <input type="text" class="form-control" id="apellidoMaterno" placeholder="Ej. López">
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label for="estadoCli">Estado</label>
+            <select id="estadoCli" class="form-control">
+                <option value="" selected>Elegir...</option>
+                <option value="Veracruz">Veracruz</option>
+                <option value="Puebla">Puebla</option>
+                <option value="Oaxaca">Oaxaca</option>
+                <option value="Chiapas">Chiapas</option>
+            </select>
+        </div>
+
+        <div class="form-group col-md-6">
+            <label for="municipioCli">Municipio</label>
+            <select id="municipioCli" class="form-control">
+                <option value="" selected>Elegir...</option>
+                <option value="Xalapa">Xalapa</option>
+                <option value="Veracruz Puerto">Veracruz Puerto</option>
+                <option value="Coatepec">Coatepec</option>
+                <option value="Boca del Río">Boca del Río</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="telefonoCli">Teléfono</label>
+        <input type="text"  maxlength="10" class="form-control" id="telefonoCli" placeholder="Ej. 2291234567">
+    </div>
+
+    <div class="form-group">
+        <label for="emailCli">Email</label>
+        <input type="email" class="form-control" id="emailCli" placeholder="ejemplo@dominio.com">
+    </div>
+
+    <hr>
+
+<div class="form-group">
+    <label>Categorías del cliente</label>
+    <div class="d-flex align-items-center">
+        <button type="button" class="btn btn-success btn-sm" id="btnAbrirCategorias">
+            Administrar categorías
+        </button>
+        <span class="ml-3 text-muted" id="resumenCategorias">0 categorías registradas</span>
+    </div>
+</div>
+</form>
             </div>
-            
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="btnGuardarCliente">Guardar Cliente</button>
@@ -449,6 +508,78 @@
         </div>
     </div>
 </div>
+
+<div id="modalCategoriasCliente" class="ventana-secundaria-overlay" style="display: none;">
+    <div class="ventana-secundaria-contenido">
+        <div class="ventana-secundaria-header bg-success text-white d-flex justify-content-between align-items-center px-3 py-2">
+            <h5 class="mb-0">Categorías del cliente</h5>
+            <button type="button" class="close text-white" id="btnCerrarCategoriasX" aria-label="Cerrar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+
+        <div class="p-3">
+            <p class="mb-1"><strong>Folio:</strong> <span id="catClienteFolio">Nuevo cliente</span></p>
+            <p><strong>Nombre:</strong> <span id="catClienteNombre">Sin definir</span></p>
+
+            <div class="input-group mb-3">
+                <select id="selectNuevaCategoria" class="form-control">
+                    <option value="" selected>Elegir categoría...</option>
+                    <option value="Solar">Solar</option>
+                    <option value="Agua">Agua</option>
+                    <option value="Ganado">Ganado</option>
+                </select>
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-success" id="btnAgregarCategoria">
+                        Agregar categoría
+                    </button>
+                </div>
+            </div>
+
+            <div id="listaCategoriasCliente"></div>
+        </div>
+
+        <div class="px-3 pb-3 text-right">
+            <button type="button" class="btn btn-secondary" id="btnCerrarCategorias">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="modalDetalleCliente" tabindex="-1" role="dialog" aria-labelledby="tituloDetalleCliente" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="tituloDetalleCliente">Detalle del Cliente</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p><strong>Folio:</strong> <span id="detalleFolio"></span></p>
+                <p><strong>Nombre:</strong> <span id="detalleNombre"></span></p>
+                <p><strong>Apellido paterno:</strong> <span id="detalleApPat"></span></p>
+                <p><strong>Apellido materno:</strong> <span id="detalleApMat"></span></p>
+                <p><strong>Teléfono:</strong> <span id="detalleTelefono"></span></p>
+                <p><strong>Email:</strong> <span id="detalleEmail"></span></p>
+                <p><strong>Estado:</strong> <span id="detalleEstado"></span></p>
+                <p><strong>Municipio:</strong> <span id="detalleMunicipio"></span></p>
+                <p><strong>Categorías:</strong> <span id="detalleCategorias"></span></p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
@@ -460,50 +591,6 @@
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
 
-    <script>
-    // Lógica para agregar un nuevo cliente a la tabla
-    const btnGuardar = document.getElementById('btnGuardarCliente');
-    const tablaClientes = document.querySelector('#dataTable tbody');
-
-    btnGuardar.addEventListener('click', function() {
-        
-        const codigo = document.getElementById('codigoCli').value;
-        const nombre = document.getElementById('nombreCli').value;
-        const apellidoPaterno = document.getElementById('apellidoPaterno').value;
-        const apellidoMaterno = document.getElementById('apellidoMaterno').value;
-        const categoria = document.getElementById('categoriaCli').value;
-        const telefono = document.getElementById('telefonoCli').value;
-        const email = document.getElementById('emailCli').value;
-
-        if(codigo === '' || nombre === '') {
-            alert('Faltan datos. Llena al menos el código y el nombre.');
-            return; 
-        }
-
-        const nuevaFila = document.createElement('tr');
-        
-        nuevaFila.innerHTML = `
-            <td>${codigo}</td>
-            <td>${nombre}</td>
-            <td>${apellidoPaterno}</td>
-            <td>${apellidoMaterno}</td>
-            <td>${categoria}</td>
-            <td>${telefono}</td>
-            <td>${email}</td>
-            <td>
-                <button class="btn btn-warning btn-circle btn-sm" title="Editar"><i class="fas fa-pen"></i></button>
-                <button class="btn btn-danger btn-circle btn-sm" title="Eliminar"><i class="fas fa-trash"></i></button>
-            </td>
-        `;
-
-        tablaClientes.appendChild(nuevaFila);
-
-        document.getElementById('formularioCliente').reset();
-
-        $('#modalNuevoCliente').modal('hide');
-    });
-</script>
-
+    <script src="js/clientes.js"></script>
 </body>
-
 </html>
