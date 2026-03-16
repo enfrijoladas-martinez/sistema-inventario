@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Movimientos de Inventario</title>
+
+    <!-- Exactamente los mismos links que tienes en almacenes.html -->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+
+    <style>
+    #modalNuevoMovimiento { z-index: 1050; }
+    </style>
+</head>
+
+<body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar (mismo que antes, solo agregamos el link) -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+                <div class="sidebar-brand-icon rotate-n-15"><i class="fas fa-laugh-wink"></i></div>
+                <div class="sidebar-brand-text mx-3">Sistema</div>
+            </a>
+            <hr class="sidebar-divider my-0">
+            <li class="nav-item"><a class="nav-link" href="index.html"><i class="fas fa-fw fa-tachometer-alt"></i> <span>Inicio</span></a></li>
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">Addons</div>
+            <li class="nav-item"><a class="nav-link" href="almacenes.html"><i class="fas fa-warehouse"></i> <span>Almacenes</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="productos.html"><i class="fas fa-box"></i> <span>Productos</span></a></li>
+            <li class="nav-item active"><a class="nav-link" href="movimientos.html"><i class="fas fa-exchange-alt"></i> <span>Movimientos de Inventario</span></a></li>
+            <hr class="sidebar-divider d-none d-md-block">
+            <div class="text-center d-none d-md-inline"><button class="rounded-circle border-0" id="sidebarToggle"></button></div>
+        </ul>
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+            <div id="content">
+
+                <!-- Topbar (exactamente igual) -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                    <!-- Sidebar Toggle + Search (cambiamos solo el placeholder) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3"><i class="fa fa-bars"></i></button>
+                    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                        <div class="input-group">
+                            <input id="buscarMovimientos" type="text" class="form-control bg-light border-0 small" placeholder="Buscar movimientos..." aria-label="Buscar">
+                            <div class="input-group-append"><button class="btn btn-primary" type="button"><i class="fas fa-search fa-sm"></i></button></div>
+                        </div>
+                    </form>
+                    <!-- resto del topbar igual que en tu archivo original -->
+                    <!-- ... (copias el resto de alerts, messages, user) ... -->
+                </nav>
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+                    <h1 class="h3 mb-4 text-gray-800">Movimientos de Inventario</h1>
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Directorio de movimientos</h6>
+                            <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNuevoMovimiento">
+                                <i class="fas fa-plus fa-sm text-white-50"></i> Agregar Nuevo Movimiento
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover text-center" id="dataTableMovimientos" width="100%" cellspacing="0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Tipo</th>
+                                            <th>Producto</th>
+                                            <th>Almacén</th>
+                                            <th>Cantidad</th>
+                                            <th style="width: 120px;">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer igual -->
+            <footer class="sticky-footer bg-white">...</footer>
+        </div>
+    </div>
+
+    <!-- Scroll to Top + Logout Modal (igual que antes) -->
+
+    <!-- ==================== MODAL NUEVO MOVIMIENTO ==================== -->
+    <div class="modal fade" id="modalNuevoMovimiento" tabindex="-1" role="dialog" aria-labelledby="tituloModalMov" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="tituloModalMov">Nuevo Movimiento</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formularioMovimiento">
+                        <div class="form-group">
+                            <label>Almacén</label>
+                            <select id="selectAlmacenMov" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Producto</label>
+                            <select id="selectProductoMov" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <select id="tipoMovimiento" class="form-control">
+                                <option value="entrada">Entrada (+)</option>
+                                <option value="salida">Salida (-)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad</label>
+                            <input type="number" id="cantidadMov" class="form-control" min="1" value="1">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarMovimiento">Guardar Movimiento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalle -->
+    <div class="modal fade" id="modalDetalleMovimiento" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Detalle del Movimiento</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">×</button>
+                </div>
+                <div class="modal-body" id="detalleBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (igual que antes) -->
+   <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <script src="js/sb-admin-2.min.js"></script>
+
+    <script src="js/movimientos.js"></script> 
+</body>
+</html>
