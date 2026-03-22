@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const detalleAlmacen = document.getElementById("detalleAlmacen");
     const detalleStock = document.getElementById("detalleStock");
     const detalleMinStock = document.getElementById("detalleMinStock");
-    const detalleEstado = document.getElementById("detalleEstado");
+    const detalleAcciones = document.getElementById("detalleAcciones");
 
     detalleProducto.textContent = inv.nombre_producto;
     detalleAlmacen.textContent = inv.nombre_almacen;
@@ -279,6 +279,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  if (isNaN(stock) || stock < 0 || isNaN(minStock) || minStock < 0) {
+  alert("Ingresa valores válidos para stock y stock mínimo");
+  return;
+}
 
   if (inputBuscar) {
     inputBuscar.addEventListener("input", () => {

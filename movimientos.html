@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Sistema de almacen</title>
+    <title>Movimientos de Inventario</title>
 
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -21,35 +21,11 @@
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
 
     <style>
-    #modalCategoriasAlmacen {
-        z-index: 1065;
-    }
 
-    #modalCategoriasAlmacen .modal-dialog {
-        z-index: 1070;
-    }
-
-    #modalNuevoAlmacen {
+    #modalNuevoMovimiento {
         z-index: 1050;
     }
-    .ventana-secundaria-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.25);
-        z-index: 2000;
-        display: none;
-        align-items: center;
-        justify-content: center;
-    }
 
-    .ventana-secundaria-contenido {
-        width: 100%;
-        max-width: 620px;
-        background: #fff;
-        border-radius: 0.35rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
-        overflow: hidden;
-    }
 </style>
 
 </head>
@@ -103,13 +79,13 @@
                     <span>Inventario</span></a>
             </li>
 
-            <li class="nav-item">
+            <li class="nav-item active">
                 <a class="nav-link" href="movimientos.html">
                     <i class="fas fa-fw fa-history"></i>
                     <span>Movimientos</span></a>
             </li>
 
-            <li class="nav-item active">
+            <li class="nav-item">
                 <a class="nav-link" href="almacen.html">
                     <i class="fas fa-fw fa-warehouse"></i>
                     <span>Almacén</span></a>
@@ -141,7 +117,7 @@
                     <form
                         class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
                         <div class="input-group">
-                            <input id="buscarAlmacenes" type="text" class="form-control bg-light border-0 small" placeholder="Buscar almacén..."
+                            <input id="buscarMovimiento" type="text" class="form-control bg-light border-0 small" placeholder="Buscar movimientos..."
                             aria-label="Buscar" aria-describedby="basic-addon2">
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button">
@@ -337,13 +313,13 @@
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-4 text-gray-800">Almacen</h1>
+                    <h1 class="h3 mb-4 text-gray-800">Movimientos de Inventario</h1>
                     <div class="card shadow mb-4">
     
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Directorio de almacenes</h6>
-        <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNuevoAlmacen">
-    <i class="fas fa-plus fa-sm text-white-50"></i> Agregar Nuevo Almacén
+        <h6 class="m-0 font-weight-bold text-primary">Movimientos de Inventario</h6>
+        <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNuevoMovimiento">
+    <i class="fas fa-plus fa-sm text-white-50"></i> Registrar Movimiento
 </a>
     </div>
 
@@ -352,30 +328,15 @@
             <table class="table table-bordered table-hover text-center" id="dataTable" width="100%" cellspacing="0">
                 <thead class="thead-light">
                     <tr>
-                        <th>Nombre</th>
-                        <th>Folio</th>
-                        <th style="width: 100px;">Acciones</th>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Producto</th>
+                        <th>Almacén</th>
+                        <th>Cantidad</th>
+                        <th style="width: 140px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Almacen Norte</td>
-                        <td>Al-001</td>
-                        <td>
-                            <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle"><i class="fas fa-eye"></i></button>
-                            <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar" title="Editar"><i class="fas fa-pen"></i></button>
-                            <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Almacen Sur</td>
-                        <td>Al-002</td>
-                        <td>
-                            <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle"><i class="fas fa-eye"></i></button>
-                            <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar" title="Editar"><i class="fas fa-pen"></i></button>
-                            <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
                 </tbody>
             </table>
         </div>
@@ -429,100 +390,75 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalNuevoAlmacen" tabindex="-1" role="dialog" aria-labelledby="tituloModal" aria-hidden="true">
+    <div class="modal fade" id="modalNuevoMovimiento" tabindex="-1" role="dialog" aria-labelledby="tituloModal" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="tituloModal">Registrar Nuevo Almacén</h5>
+                <h5 class="modal-title" id="tituloModal">Registrar Movimiento</h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-
             <div class="modal-body">
-                <form id="formularioAlmacen">
-                    <div class="form-group">
-                        <label for="nombreAlm">Nombre</label>
-                        <input type="text" class="form-control" id="nombreAlm" placeholder="Ej. Almacen Norte">
-                    </div>
-                    <div class="form-group">
-                        <label for="folioAlm">Folio</label>
-                        <input type="text" class="form-control" id="folioAlm" placeholder="Ej. AL-001">
-                    </div>
-    <hr>
-<div class="form-group">
-    <label>Categorías del almacén</label>
-    <div class="d-flex align-items-center">
-        <button type="button" class="btn btn-success btn-sm" id="btnAbrirCategorias">
-            Administrar categorías
-        </button>
-        <span class="ml-3 text-muted" id="resumenCategorias">0 categorías registradas</span>
+
+    <form id="formularioMovimiento">
+
+    <div class="form-group">
+        <label for="fechaMovimiento">Fecha</label>
+        <input type="datetime-local" class="form-control" id="fechaMovimiento">
     </div>
-</div>
+
+    <div class="form-group">
+        <label for="tipoMovimiento">Tipo de movimiento</label>
+        <select id="tipoMovimiento" class="form-control">
+            <option value="" selected>Elegir tipo...</option>
+            <option value="entrada">Entrada</option>
+            <option value="salida">Salida</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="selectInventarioMovimiento">Inventario</label>
+        <select id="selectInventarioMovimiento" class="form-control">
+            <option value="" selected>Elegir producto y almacén...</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="cantidadMovimiento">Cantidad</label>
+        <input type="number" min="1" class="form-control" id="cantidadMovimiento" placeholder="Ej. 10">
+    </div>
+
 </form>
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="btnGuardarAlmacen">Guardar Almacén</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarMovimiento">Guardar Movimiento</button>
             </div>
         </div>
     </div>
 </div>
 
-<div id="modalCategoriasAlmacen" class="ventana-secundaria-overlay" style="display: none;">
-    <div class="ventana-secundaria-contenido">
-        <div class="ventana-secundaria-header bg-success text-white d-flex justify-content-between align-items-center px-3 py-2">
-            <h5 class="mb-0">Categorías del almacén</h5>
-            <button type="button" class="close text-white" id="btnCerrarCategoriasX" aria-label="Cerrar">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-
-        <div class="p-3">
-            <p class="mb-1"><strong>Folio:</strong> <span id="catAlmacenFolio">Nuevo almacén</span></p>
-            <p><strong>Nombre:</strong> <span id="catAlmacenNombre">Sin definir</span></p>
-
-            <div class="input-group mb-3">
-                <select id="selectNuevaCategoria" class="form-control">
-                    <option value="" selected>Elegir categoría...</option>
-                    <option value="Solar">Solar</option>
-                    <option value="Agua">Agua</option>
-                    <option value="Ganado">Ganado</option>
-                </select>
-                <div class="input-group-append">
-                    <button type="button" class="btn btn-success" id="btnAgregarCategoria">
-                        Agregar categoría
-                    </button>
-                </div>
-            </div>
-
-            <div id="listaCategoriasAlmacen"></div>
-        </div>
-
-        <div class="px-3 pb-3 text-right">
-            <button type="button" class="btn btn-secondary" id="btnCerrarCategorias">
-                Cerrar
-            </button>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalDetalleAlmacen" tabindex="-1" role="dialog" aria-labelledby="tituloDetalleAlmacen" aria-hidden="true">
+<div class="modal fade" id="modalDetalleMovimiento" tabindex="-1" role="dialog" aria-labelledby="tituloDetalleMovimiento" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
 
             <div class="modal-header bg-info text-white">
-                <h5 class="modal-title" id="tituloDetalleAlmacen">Detalle del Almacén</h5>
+                <h5 class="modal-title" id="tituloDetalleMovimiento">Detalle del Movimiento</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
 
             <div class="modal-body">
-                <p><strong>Nombre:</strong> <span id="detalleNombre"></span></p>
-                <p><strong>Folio:</strong> <span id="detalleFolio"></span></p>
-                <p><strong>Categorías:</strong> <span id="detalleCategorias"></span></p>
+                <p><strong>ID Movimiento:</strong> <span id="detalleIdMovimiento"></span></p>
+                <p><strong>Tipo:</strong> <span id="detalleTipoMovimiento"></span></p>
+                <p><strong>ID Venta:</strong> <span id="detalleIdVentaMovimiento"></span></p>
+                <p><strong>Producto:</strong> <span id="detalleProductoMovimiento"></span></p>
+                <p><strong>Almacén:</strong> <span id="detalleAlmacenMovimiento"></span></p>
+                <p><strong>Cantidad:</strong> <span id="detalleCantidadMovimiento"></span></p>
             </div>
 
             <div class="modal-footer">
@@ -543,6 +479,6 @@
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
 
-    <script src="js/almacen.js"></script>
+    <script src="js/movimientos.js"></script>
 </body>
 </html>

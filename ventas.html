@@ -47,20 +47,41 @@
                     <i class="fas fa-fw fa-tachometer-alt"></i>
                     <span>Inicio</span></a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="productos.html">
+                    <i class="fas fa-fw fa-box"></i>
+                    <span>Productos</span></a>
+            </li>
 
-            <!-- Divider -->
-            <hr class="sidebar-divider">
+            <li class="nav-item">
+                <a class="nav-link" href="clientes.html">
+                    <i class="fas fa-fw fa-user-friends"></i>
+                    <span>Clientes</span></a>
+            </li>
 
-            <!-- Divider -->
-            <hr class="sidebar-divider">
+            <li class="nav-item active">
+                <a class="nav-link" href="ventas.html">
+                    <i class="fas fa-fw fa-cart-plus"></i>
+                    <span>Ventas</span></a>
+            </li>
 
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Addons
-            </div>
+            <li class="nav-item">
+                <a class="nav-link" href="inventario.html">
+                    <i class="fas fa-fw fa-list-alt"></i>
+                    <span>Inventario</span></a>
+            </li>
 
-            <!-- Divider -->
-            <hr class="sidebar-divider d-none d-md-block">
+            <li class="nav-item">
+                <a class="nav-link" href="movimientos.html">
+                    <i class="fas fa-fw fa-history"></i>
+                    <span>Movimientos</span></a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="almacen.html">
+                    <i class="fas fa-fw fa-warehouse"></i>
+                    <span>Almacén</span></a>
+            </li>
 
             <!-- Sidebar Toggler (Sidebar) -->
             <div class="text-center d-none d-md-inline">
@@ -341,7 +362,7 @@
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>Copyright &copy; Your Website 2020</span>
+                        <span>Copyright &copy; 2026 Sistema Inventario Agromundo</span>
                     </div>
                 </div>
             </footer>
@@ -433,46 +454,7 @@
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
 
-    <script>
-    // Lógica para agregar un nuevo producto a la tabla
-    const btnGuardar = document.getElementById('btnGuardar');
-    const tablaProductos = document.querySelector('#dataTable tbody');
-
-    btnGuardar.addEventListener('click', function() {
-        
-        const folio = document.getElementById('folioProd').value;
-        const cantidad = document.getElementById('cantidadProd').value;
-        const precioVenta = document.getElementById('precioProd').value;
-        const precioFinal = document.getElementById('precioFinalProd').value;
-        const idProducto = document.getElementById('idProd').value;
-
-        if(folio === '' || cantidad === '' || precioVenta === '' || precioFinal === '' || idProducto === '') {
-            alert('Faltan datos. Rellena los datos obligatorios..');
-            return; 
-        }
-
-        const nuevaFila = document.createElement('tr');
-        
-        nuevaFila.innerHTML = `
-            <td>${folio}</td>
-            <td>${cantidad}</td>
-            <td>${precioVenta}</td>
-            <td>${precioFinal}</td>
-            <td>${idProducto}</td>
-            <td>
-                <button class="btn btn-warning btn-circle btn-sm" title="Editar"><i class="fas fa-pen"></i></button>
-                <button class="btn btn-danger btn-circle btn-sm" title="Eliminar"><i class="fas fa-trash"></i></button>
-            </td>
-        `;
-
-        tablaProductos.appendChild(nuevaFila);
-
-        document.getElementById('formularioVentas').reset();
-
-        $('#modalNuevaVenta').modal('hide');
-    });
-</script>
-
+    
 </body>
 
 </html>
