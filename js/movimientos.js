@@ -57,6 +57,17 @@ document.addEventListener("DOMContentLoaded", () => {
     return tipo ? "Entrada" : "Salida";
   }
 
+  // --- NUEVA FUNCIÓN PARA FORMATEAR LA FECHA ---
+  function formatearFecha(fechaConT) {
+    if (!fechaConT) return "";
+    let partes = fechaConT.split('T');
+    if (partes.length !== 2) return fechaConT;
+    let fecha = partes[0].split('-');
+    let hora = partes[1];
+    return `${fecha[2]}-${fecha[1]}-${fecha[0]} ${hora}`;
+  }
+  // ---------------------------------------------
+
   function resetFormulario() {
     form.reset();
     inpFecha.value = new Date().toISOString().slice(0, 16);
@@ -163,9 +174,10 @@ document.addEventListener("DOMContentLoaded", () => {
           return texto.includes(f);
         });
 
+    // --- AQUÍ SE APLICA EL CAMBIO EN LA FECHA ---
     tbody.innerHTML = lista.map((m) => `
       <tr data-id="${m.id_mov}">
-        <td>${m.fecha || ""}</td>
+        <td>${formatearFecha(m.fecha) || ""}</td>
         <td>${textoTipo(m.tipo)}</td>
         <td>${m.nombre_producto}</td>
         <td>${m.nombre_almacen}</td>
