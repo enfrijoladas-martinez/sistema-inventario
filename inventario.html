@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Movimientos de Inventario</title>
+    <title>Sistema de Inventario</title>
 
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -22,7 +22,7 @@
 
     <style>
 
-    #modalNuevoMovimiento {
+    #modalNuevoInventario {
         z-index: 1050;
     }
 
@@ -73,13 +73,13 @@
                     <span>Ventas</span></a>
             </li>
 
-            <li class="nav-item">
+            <li class="nav-item active">
                 <a class="nav-link" href="inventario.html">
                     <i class="fas fa-fw fa-list-alt"></i>
                     <span>Inventario</span></a>
             </li>
 
-            <li class="nav-item active">
+            <li class="nav-item">
                 <a class="nav-link" href="movimientos.html">
                     <i class="fas fa-fw fa-history"></i>
                     <span>Movimientos</span></a>
@@ -117,7 +117,7 @@
                     <form
                         class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
                         <div class="input-group">
-                            <input id="buscarMovimiento" type="text" class="form-control bg-light border-0 small" placeholder="Buscar movimientos..."
+                            <input id="buscarInventario" type="text" class="form-control bg-light border-0 small" placeholder="Buscar inventario..."
                             aria-label="Buscar" aria-describedby="basic-addon2">
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button">
@@ -313,13 +313,13 @@
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-4 text-gray-800">Movimientos de Inventario</h1>
+                    <h1 class="h3 mb-4 text-gray-800">Inventario</h1>
                     <div class="card shadow mb-4">
     
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Movimientos de Inventario</h6>
-        <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNuevoMovimiento">
-    <i class="fas fa-plus fa-sm text-white-50"></i> Registrar Movimiento
+        <h6 class="m-0 font-weight-bold text-primary">Inventario</h6>
+        <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNuevoInventario">
+    <i class="fas fa-plus fa-sm text-white-50"></i> Agregar Inventario
 </a>
     </div>
 
@@ -328,12 +328,11 @@
             <table class="table table-bordered table-hover text-center" id="dataTable" width="100%" cellspacing="0">
                 <thead class="thead-light">
                     <tr>
-                        <th>Fecha</th>
-                        <th>Tipo</th>
                         <th>Producto</th>
                         <th>Almacén</th>
-                        <th>Cantidad</th>
-                        <th style="width: 140px;">Acciones</th>
+                        <th>Stock</th>
+                        <th>Stock mínimo</th>
+                        <th style="width: 100px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -390,75 +389,70 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalNuevoMovimiento" tabindex="-1" role="dialog" aria-labelledby="tituloModal" aria-hidden="true">
+    <div class="modal fade" id="modalNuevoInventario" tabindex="-1" role="dialog" aria-labelledby="tituloModal" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="tituloModal">Registrar Movimiento</h5>
+                <h5 class="modal-title" id="tituloModal">Registrar Inventario</h5>
                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
             <div class="modal-body">
-
-    <form id="formularioMovimiento">
-
-    <div class="form-group">
-        <label for="fechaMovimiento">Fecha</label>
-        <input type="datetime-local" class="form-control" id="fechaMovimiento">
-    </div>
+            <form id="formularioInventario">
 
     <div class="form-group">
-        <label for="tipoMovimiento">Tipo de movimiento</label>
-        <select id="tipoMovimiento" class="form-control">
-            <option value="" selected>Elegir tipo...</option>
-            <option value="entrada">Entrada</option>
-            <option value="salida">Salida</option>
+        <label for="selectProducto">Producto</label>
+        <select id="selectProducto" class="form-control">
+            <option value="" selected>Elegir producto...</option>
         </select>
     </div>
 
     <div class="form-group">
-        <label for="selectInventarioMovimiento">Inventario</label>
-        <select id="selectInventarioMovimiento" class="form-control">
-            <option value="" selected>Elegir producto y almacén...</option>
+        <label for="selectAlmacen">Almacén</label>
+        <select id="selectAlmacen" class="form-control">
+            <option value="" selected>Elegir almacén...</option>
         </select>
     </div>
 
     <div class="form-group">
-        <label for="cantidadMovimiento">Cantidad</label>
-        <input type="number" min="1" class="form-control" id="cantidadMovimiento" placeholder="Ej. 10">
+        <label for="stockInventario">Stock</label>
+        <input type="number" min="0" class="form-control" id="stockInventario" placeholder="Ej. 50">
     </div>
 
+    <div class="form-group">
+        <label for="minStockInventario">Stock mínimo</label>
+        <input type="number" min="0" class="form-control" id="minStockInventario" placeholder="Ej. 10">
+    </div>
 </form>
 
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="btnGuardarMovimiento">Guardar Movimiento</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarInventario">Guardar Inventario</button>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalDetalleMovimiento" tabindex="-1" role="dialog" aria-labelledby="tituloDetalleMovimiento" aria-hidden="true">
+<div class="modal fade" id="modalDetalleInventario" tabindex="-1" role="dialog" aria-labelledby="tituloDetalleInventario" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
 
             <div class="modal-header bg-info text-white">
-                <h5 class="modal-title" id="tituloDetalleMovimiento">Detalle del Movimiento</h5>
+                <h5 class="modal-title" id="tituloDetalleInventario">Detalle del Inventario</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
 
             <div class="modal-body">
-                <p><strong>ID Movimiento:</strong> <span id="detalleIdMovimiento"></span></p>
-                <p><strong>Tipo:</strong> <span id="detalleTipoMovimiento"></span></p>
-                <p><strong>ID Venta:</strong> <span id="detalleIdVentaMovimiento"></span></p>
-                <p><strong>Producto:</strong> <span id="detalleProductoMovimiento"></span></p>
-                <p><strong>Almacén:</strong> <span id="detalleAlmacenMovimiento"></span></p>
-                <p><strong>Cantidad:</strong> <span id="detalleCantidadMovimiento"></span></p>
+                <p><strong>Producto:</strong> <span id="detalleProducto"></span></p>
+                <p><strong>Almacén:</strong> <span id="detalleAlmacen"></span></p>
+                <p><strong>Stock:</strong> <span id="detalleStock"></span></p>
+                <p><strong>Stock mínimo:</strong> <span id="detalleMinStock"></span></p>
+                <p><strong>Acciones</strong> <span id="detalleAcciones"></span></p>
             </div>
 
             <div class="modal-footer">
@@ -479,6 +473,6 @@
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
 
-    <script src="js/movimientos.js"></script>
+    <script src="js/inventario.js"></script>
 </body>
 </html>
