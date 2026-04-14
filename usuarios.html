@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Sistema de Ventas</title>
+    <title>Sistema de usuarios</title>
 
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -22,13 +22,27 @@
 
     <style>
 
-    #modalNuevaVenta {
+    #modalNuevoUsuario {
         z-index: 1050;
     }
-    .modal-mediano{
-        max-width: 650px;
+    .ventana-secundaria-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.25);
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
     }
 
+    .ventana-secundaria-contenido {
+        width: 100%;
+        max-width: 620px;
+        background: #fff;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+    }
 </style>
 
 </head>
@@ -64,13 +78,13 @@
                     <span>Productos</span></a>
             </li>
 
-            <li class="nav-item">
+            <li class="nav-item active">
                 <a class="nav-link" href="clientes.html">
                     <i class="fas fa-fw fa-user-friends"></i>
                     <span>Clientes</span></a>
             </li>
 
-            <li class="nav-item active">
+            <li class="nav-item">
                 <a class="nav-link" href="ventas.html">
                     <i class="fas fa-fw fa-cart-plus"></i>
                     <span>Ventas</span></a>
@@ -93,13 +107,6 @@
                     <i class="fas fa-fw fa-warehouse"></i>
                     <span>Almacén</span></a>
             </li>
-
-            <li class="nav-item active">
-                <a class="nav-link" href="reportes.html">
-                    <i class="fas fa-fw fa-chart-bar"></i>
-                    <span>Reportes</span></a>
-            </li>
-
 
             <!-- Sidebar Toggler (Sidebar) -->
             <div class="text-center d-none d-md-inline">
@@ -127,7 +134,7 @@
                     <form
                         class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
                         <div class="input-group">
-                            <input id="buscarVenta" type="text" class="form-control bg-light border-0 small" placeholder="Buscar venta..."
+                            <input id="buscarClientes" type="text" class="form-control bg-light border-0 small" placeholder="Buscar clientes..."
                             aria-label="Buscar" aria-describedby="basic-addon2">
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button">
@@ -323,13 +330,13 @@
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-4 text-gray-800">Ventas</h1>
+                    <h1 class="h3 mb-4 text-gray-800">Lista de usuarios</h1>
                     <div class="card shadow mb-4">
     
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Ventas</h6>
-        <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNuevaVenta">
-    <i class="fas fa-plus fa-sm text-white-50"></i> Registrar Venta
+        <h6 class="m-0 font-weight-bold text-primary">Directorio de usuarios</h6>
+        <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNuevoUsuario">
+    <i class="fas fa-plus fa-sm text-white-50"></i> Agregar Nuevo Usuario
 </a>
     </div>
 
@@ -338,14 +345,37 @@
             <table class="table table-bordered table-hover text-center" id="dataTable" width="100%" cellspacing="0">
                 <thead class="thead-light">
                     <tr>
-                        <th>Folio</th>
-                        <th>Total</th>
-                        <th>Estado</th>
-                        <th>Municipio</th>
-                        <th style="width: 140px;">Acciones</th>
+                        <th>Id</th>
+                        <th>Nombre</th>
+                        <th>Teléfono</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th style="width: 100px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Adminstrador</td>
+                        <td>1234567891</td>
+                        <td>Admin@gmail.com</td>
+                        <td>Admin</td>
+                        <td>
+                            <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Carlos</td>
+                        <td>2299772277</td>
+                        <td>carlos.garcia@gmail.com</td>
+                        <td>Usuario</td>
+                        <td>
+                            <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -399,120 +429,59 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalNuevaVenta" tabindex="-1" role="dialog" aria-labelledby="tituloModal" aria-hidden="true">
-    <div class="modal-dialog modal-mediano" role="document">
-        <div class="modal-content">
-            
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="tituloModal">Registrar Venta</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            <div class="modal-body">
+    <div class="modal fade" id="modalNuevoUsuario" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
 
-                <form id="formularioVenta">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Registrar Usuario</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
 
-    <div class="form-group">
-        <label for="folioVenta">Folio</label>
-        <input type="text" class="form-control" id="folioVenta" placeholder="Ej. V001">
+      <div class="modal-body">
+        <form id="formularioUsuario">
+
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" id="nombreUsuario" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" id="telefonoUsuario" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="emailUsuario" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" id="passwordUsuario" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>Rol</label>
+            <select id="rolUsuario" class="form-control">
+              <option value="1">Admin</option>
+              <option value="2">Empleado</option>
+            </select>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" id="btnGuardarUsuario">Guardar</button>
+      </div>
+
     </div>
-
-    <div class="form-group">
-        <label for="selectEstadoVenta">Estado</label>
-        <select id="selectEstadoVenta" class="form-control">
-            <option value="">Elegir estado...</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label for="selectMunicipioVenta">Municipio</label>
-        <select id="selectMunicipioVenta" class="form-control">
-            <option value="">Elegir municipio...</option>
-        </select>
-    </div>
-
-    <hr>
-
-    <h6 class="font-weight-bold text-primary">Detalle de venta</h6>
-
-    <div class="form-group">
-        <label for="selectProductoVenta">Producto</label>
-        <select id="selectProductoVenta" class="form-control">
-            <option value="">Elegir producto...</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label for="cantidadVenta">Cantidad</label>
-        <input type="number" min="1" class="form-control" id="cantidadVenta" placeholder="Ej. 2">
-    </div>
-
-    <div class="form-group">
-        <label for="precioVenta">Precio venta</label>
-        <input type="number" min="0" step="0.01" class="form-control" id="precioVenta" placeholder="Ej. 150.00">
-    </div>
-
-    <button type="button" class="btn btn-info btn-sm mb-3" id="btnAgregarDetalleVenta">
-        Agregar producto
-    </button>
-
-    <div class="table-responsive">
-        <table class="table table-bordered table-sm text-center">
-            <thead class="thead-light">
-                <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio</th>
-                    <th>Importe</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="tbodyDetalleVenta"></tbody>
-        </table>
-    </div>
-
-    <div class="text-right">
-        <strong>Total: $<span id="totalVenta">0.00</span></strong>
-    </div>
-    </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="btnGuardarVenta">Guardar Venta</button>
-            </div>
-        </div>
-    </div>
-    </div>
-<div class="modal fade" id="modalDetalleVenta" tabindex="-1" role="dialog" aria-labelledby="tituloDetalleVenta" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title" id="tituloDetalleVenta">Detalle de la Venta</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-
-            <div class="modal-body">
-                <p><strong>Folio:</strong> <span id="detalleFolioVenta"></span></p>
-                <p><strong>Total:</strong> $<span id="detalleTotalVenta"></span></p>
-                <p><strong>Estado:</strong> <span id="detalleEstadoVenta"></span></p>
-                <p><strong>Municipio:</strong> <span id="detalleMunicipioVenta"></span></p>
-
-                <hr>
-                <h6 class="font-weight-bold text-primary">Productos vendidos</h6>
-                <div id="detalleItemsVenta"></div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-            </div>
-
-        </div>
-    </div>
+  </div>
 </div>
+            
+            
 
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
@@ -524,6 +493,6 @@
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
 
-    <script src="js/ventas.js"></script>
+    <script src="js/usuarios.js"></script>
 </body>
 </html>
