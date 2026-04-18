@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const STORAGE_KEY = "almacenes_v1";
+  const API_BASE = "http://143.198.230.63";
 
   const btnGuardar = document.getElementById("btnGuardarAlmacen");
   const btnAbrirCategorias = document.getElementById("btnAbrirCategorias");
@@ -26,26 +26,75 @@ document.addEventListener("DOMContentLoaded", () => {
   const tituloModal = document.getElementById("tituloModal");
 
   let modo = "create";
-  let folioEditando = null;
+  let idEditando = null;
   let categoriasTemporales = [];
+  let categoriasCache = [];
+  let almacenesCache = [];
 
   const norm = (v) => (v ?? "").toString().trim();
 
-  const getAlmacenes = () => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  };
+  async function apiFetch(endpoint, options = {}) {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      },
+      ...options
+    });
 
-  const setAlmacenes = (arr) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-  };
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(data?.message || "Error en la petición");
+    }
+
+    if (data && data.success === false) {
+      throw new Error(data?.message || "Operación fallida");
+    }
+
+    return data;
+  }
+
+  async function getAlmacenesAPI() {
+    const res = await apiFetch("/api/almacenes/");
+    return Array.isArray(res.data) ? res.data : [];
+  }
+
+  async function getAlmacenDetalleAPI(idAlmacen) {
+    const res = await apiFetch(`/api/almacenes/${idAlmacen}`);
+    return res.data || null;
+  }
+
+  async function crearAlmacenAPI(payload) {
+    return await apiFetch("/api/almacenes/", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async function editarAlmacenAPI(idAlmacen, payload) {
+    return await apiFetch(`/api/almacenes/${idAlmacen}`, {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async function eliminarAlmacenAPI(idAlmacen) {
+    return await apiFetch(`/api/almacenes/${idAlmacen}`, {
+      method: "DELETE"
+    });
+  }
+
+  async function getCategoriasAPI() {
+    const res = await apiFetch("/api/categorias/");
+    return Array.isArray(res.data) ? res.data : [];
+  }
 
   function actualizarResumenCategorias() {
+    if (!resumenCategorias) return;
     const total = categoriasTemporales.length;
-    resumenCategorias.textContent = `${total} ${total === 1 ? "categoría registrada" : "categorías registradas"}`;
+    resumenCategorias.textContent =
+      `${total} ${total === 1 ? "categoría registrada" : "categorías registradas"}`;
   }
 
   function renderCategoriasTemporales() {
@@ -61,10 +110,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     listaCategoriasAlmacen.innerHTML = `
       <ul class="list-group">
-        ${categoriasTemporales.map((cat) => `
+        ${categoriasTemporales.map((cat, index) => `
           <li class="list-group-item d-flex justify-content-between align-items-center">
-            ${cat}
-            <button type="button" class="btn btn-danger btn-sm btn-quitar-categoria" data-categoria="${cat}">
+            ${cat.nombre}
+            <button
+              type="button"
+              class="btn btn-danger btn-sm btn-quitar-categoria"
+              data-index="${index}"
+            >
               Quitar
             </button>
           </li>
@@ -76,25 +129,54 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function actualizarEncabezadoCategorias() {
-    catAlmacenFolio.textContent = norm(inpFolio.value) || "Nuevo almacén";
-    catAlmacenNombre.textContent = norm(inpNombre.value) || "Sin definir";
+    if (catAlmacenFolio) {
+      catAlmacenFolio.textContent = norm(inpFolio?.value) || "Nuevo almacén";
+    }
+    if (catAlmacenNombre) {
+      catAlmacenNombre.textContent = norm(inpNombre?.value) || "Sin definir";
+    }
+  }
+
+  function cargarCategoriasSelect() {
+    if (!selectNuevaCategoria) return;
+
+    selectNuevaCategoria.innerHTML = `
+      <option value="" selected>Elegir categoría...</option>
+    `;
+
+    categoriasCache.forEach((cat) => {
+      const option = document.createElement("option");
+      option.value = cat.id_cat;
+      option.textContent = cat.nombre;
+      selectNuevaCategoria.appendChild(option);
+    });
   }
 
   function renderTabla(filtro = "") {
+    if (!tbody) return;
+
     const f = norm(filtro).toLowerCase();
-    const almacenes = getAlmacenes();
 
     const lista = !f
-      ? almacenes
-      : almacenes.filter((a) => {
-          const texto = `${a.folio} ${a.nombre} ${(a.categorias || []).join(" ")}`.toLowerCase();
+      ? almacenesCache
+      : almacenesCache.filter((a) => {
+          const texto = `${a.folio || ""} ${a.nombre || ""}`.toLowerCase();
           return texto.includes(f);
         });
 
+    if (lista.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center text-muted">Sin almacenes registrados.</td>
+        </tr>
+      `;
+      return;
+    }
+
     tbody.innerHTML = lista.map((a) => `
-      <tr data-folio="${a.folio}">
-        <td>${a.folio}</td>
-        <td>${a.nombre}</td>
+      <tr data-id="${a.id_almacen}">
+        <td>${a.folio || ""}</td>
+        <td>${a.nombre || ""}</td>
         <td>
           <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle">
             <i class="fas fa-eye"></i>
@@ -110,68 +192,85 @@ document.addEventListener("DOMContentLoaded", () => {
     `).join("");
   }
 
-  function seedFromHTMLIfEmpty() {
-    const current = getAlmacenes();
-    if (current.length > 0) return;
-
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    const seeded = rows.map((tr) => {
-      const tds = tr.querySelectorAll("td");
-      if (tds.length < 2) return null;
-
-      return {
-        folio: norm(tds[0].textContent),
-        nombre: norm(tds[1].textContent),
-        categorias: []
-      };
-    }).filter(Boolean);
-
-    if (seeded.length > 0) {
-      setAlmacenes(seeded);
-    }
-  }
-
   function resetFormularioAlmacen() {
-    form.reset();
+    if (form) form.reset();
     categoriasTemporales = [];
-    folioEditando = null;
-    inpFolio.disabled = false;
-    renderCategoriasTemporales();
-    actualizarEncabezadoCategorias();
-  }
+    idEditando = null;
+    modo = "create";
 
-  function abrirEditar(almacen) {
-    modo = "edit";
-    folioEditando = almacen.folio;
+    if (inpFolio) inpFolio.disabled = false;
+    if (selectNuevaCategoria) selectNuevaCategoria.value = "";
 
-    inpFolio.value = almacen.folio;
-    inpNombre.value = almacen.nombre;
-
-    categoriasTemporales = [...(almacen.categorias || [])];
     renderCategoriasTemporales();
     actualizarEncabezadoCategorias();
 
-    inpFolio.disabled = true;
-    tituloModal.textContent = `Editar Almacén ${almacen.folio}`;
-    btnGuardar.textContent = "Guardar Cambios";
-    $(modalRegistro).modal("show");
+    if (tituloModal) tituloModal.textContent = "Registrar Nuevo Almacén";
+    if (btnGuardar) btnGuardar.textContent = "Guardar Almacén";
   }
 
-  function abrirDetalle(almacen) {
-    const detalleFolio = document.getElementById("detalleFolio");
-    const detalleNombre = document.getElementById("detalleNombre");
-    const detalleCategorias = document.getElementById("detalleCategorias");
+  async function abrirEditar(idAlmacen) {
+    try {
+      const almacen = await getAlmacenDetalleAPI(idAlmacen);
 
-    if (!detalleFolio || !detalleNombre || !detalleCategorias) {
-      console.error("Faltan elementos del modal de detalle");
-      return;
+      if (!almacen) {
+        alert("No se pudo cargar el almacén");
+        return;
+      }
+
+      modo = "edit";
+      idEditando = almacen.id_almacen;
+
+      if (inpFolio) {
+        inpFolio.value = almacen.folio || "";
+        inpFolio.disabled = true;
+      }
+
+      if (inpNombre) {
+        inpNombre.value = almacen.nombre || "";
+      }
+
+      categoriasTemporales = (almacen.categorias || []).map((cat) => ({
+        id_cat: cat.id_cat,
+        nombre: cat.nombre
+      }));
+
+      renderCategoriasTemporales();
+      actualizarEncabezadoCategorias();
+
+      if (tituloModal) tituloModal.textContent = `Editar Almacén ${almacen.folio || ""}`;
+      if (btnGuardar) btnGuardar.textContent = "Guardar Cambios";
+
+      $(modalRegistro).modal("show");
+    } catch (err) {
+      alert(`Error al cargar el almacén: ${err.message}`);
     }
+  }
 
-    detalleFolio.textContent = almacen.folio;
-    detalleNombre.textContent = almacen.nombre;
-    detalleCategorias.textContent = (almacen.categorias || []).join(", ") || "Sin categorías";
+  async function abrirDetalle(idAlmacen) {
+    try {
+      const almacen = await getAlmacenDetalleAPI(idAlmacen);
 
-    $("#modalDetalleAlmacen").modal("show");
+      if (!almacen) {
+        alert("No se pudo obtener el detalle del almacén");
+        return;
+      }
+
+      const detalleFolio = document.getElementById("detalleFolio");
+      const detalleNombre = document.getElementById("detalleNombre");
+      const detalleCategorias = document.getElementById("detalleCategorias");
+
+      if (detalleFolio) detalleFolio.textContent = almacen.folio || "";
+      if (detalleNombre) detalleNombre.textContent = almacen.nombre || "";
+      if (detalleCategorias) {
+        detalleCategorias.textContent = (almacen.categorias || []).length
+          ? almacen.categorias.map((cat) => cat.nombre).join(", ")
+          : "Sin categorías";
+      }
+
+      $("#modalDetalleAlmacen").modal("show");
+    } catch (err) {
+      alert(`Error al cargar el detalle: ${err.message}`);
+    }
   }
 
   function cerrarVentanaCategorias() {
@@ -180,26 +279,62 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  seedFromHTMLIfEmpty();
-  renderTabla();
-  renderCategoriasTemporales();
-  actualizarResumenCategorias();
+  async function guardarAlmacen() {
+    const folio = norm(inpFolio?.value);
+    const nombre = norm(inpNombre?.value);
 
-  $(modalRegistro).on("show.bs.modal", function () {
-    if (modo !== "edit") {
-      modo = "create";
-      folioEditando = null;
-      resetFormularioAlmacen();
-      tituloModal.textContent = "Registrar Nuevo Almacén";
-      btnGuardar.textContent = "Guardar Almacén";
+    if (!folio || !nombre) {
+      alert("Completa todos los campos obligatorios");
+      return;
     }
-  });
 
-  $(modalRegistro).on("hidden.bs.modal", function () {
-    modo = "create";
-    folioEditando = null;
-    resetFormularioAlmacen();
-  });
+    if (categoriasTemporales.length === 0) {
+      alert("Agrega al menos una categoría");
+      return;
+    }
+
+    let payload;
+
+    if (modo === "create") {
+      payload = {
+      folio,
+      nombre,
+      categorias_ids: categoriasTemporales.map((cat) => cat.id_cat)
+    };
+    } else {
+      payload = {
+      nombre,
+      categorias_ids: categoriasTemporales.map((cat) => cat.id_cat)
+    };
+    }
+
+    try {
+      if (modo === "create") {
+        await crearAlmacenAPI(payload);
+      } else {
+        await editarAlmacenAPI(idEditando, payload);
+      }
+
+      almacenesCache = await getAlmacenesAPI();
+      renderTabla(inputBuscar ? inputBuscar.value : "");
+      resetFormularioAlmacen();
+      $(modalRegistro).modal("hide");
+    } catch (err) {
+      alert(`Error al guardar: ${err.message}`);
+    }
+  }
+
+  async function eliminarAlmacen(idAlmacen, folio) {
+    if (!confirm(`¿Eliminar el almacén ${folio}?`)) return;
+
+    try {
+      await eliminarAlmacenAPI(idAlmacen);
+      almacenesCache = await getAlmacenesAPI();
+      renderTabla(inputBuscar ? inputBuscar.value : "");
+    } catch (err) {
+      alert(`Error al eliminar: ${err.message}`);
+    }
+  }
 
   if (btnAbrirCategorias) {
     btnAbrirCategorias.addEventListener("click", () => {
@@ -221,19 +356,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnAgregarCategoria) {
     btnAgregarCategoria.addEventListener("click", () => {
-      const nuevaCategoria = norm(selectNuevaCategoria.value);
+      const idCat = Number(selectNuevaCategoria?.value || 0);
 
-      if (!nuevaCategoria) {
+      if (!idCat) {
         alert("Selecciona una categoría");
         return;
       }
 
-      if (categoriasTemporales.includes(nuevaCategoria)) {
+      const categoria = categoriasCache.find((cat) => Number(cat.id_cat) === idCat);
+
+      if (!categoria) {
+        alert("No se encontró la categoría");
+        return;
+      }
+
+      const yaExiste = categoriasTemporales.some((cat) => Number(cat.id_cat) === idCat);
+
+      if (yaExiste) {
         alert("Esa categoría ya fue agregada");
         return;
       }
 
-      categoriasTemporales.push(nuevaCategoria);
+      categoriasTemporales.push({
+        id_cat: categoria.id_cat,
+        nombre: categoria.nombre
+      });
+
       renderCategoriasTemporales();
       selectNuevaCategoria.value = "";
     });
@@ -244,8 +392,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const btnQuitar = e.target.closest(".btn-quitar-categoria");
       if (!btnQuitar) return;
 
-      const categoria = btnQuitar.getAttribute("data-categoria");
-      categoriasTemporales = categoriasTemporales.filter((cat) => cat !== categoria);
+      const index = Number(btnQuitar.getAttribute("data-index"));
+      categoriasTemporales.splice(index, 1);
       renderCategoriasTemporales();
     });
   }
@@ -253,93 +401,32 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnGuardar) {
     btnGuardar.addEventListener("click", (e) => {
       e.preventDefault();
-
-      const folio = norm(inpFolio.value);
-      const nombre = norm(inpNombre.value);
-
-      if (!folio || !nombre) {
-        alert("Completa todos los campos obligatorios");
-        return;
-      }
-
-      if (categoriasTemporales.length === 0) {
-        alert("Agrega al menos una categoría");
-        return;
-      }
-
-      const almacenes = getAlmacenes();
-
-      if (modo === "create") {
-        if (almacenes.some((a) => a.folio.toUpperCase() === folio.toUpperCase())) {
-          alert("Ese folio ya existe");
-          return;
-        }
-
-        almacenes.push({
-          folio,
-          nombre,
-          categorias: [...categoriasTemporales]
-        });
-
-        setAlmacenes(almacenes);
-        renderTabla(inputBuscar ? inputBuscar.value : "");
-        resetFormularioAlmacen();
-        $(modalRegistro).modal("hide");
-        return;
-      }
-
-      const idx = almacenes.findIndex((a) => a.folio === folioEditando);
-      if (idx === -1) {
-        alert("No se encontró el almacén a editar.");
-        return;
-      }
-
-      almacenes[idx] = {
-        ...almacenes[idx],
-        folio,
-        nombre,
-        categorias: [...categoriasTemporales]
-      };
-
-      setAlmacenes(almacenes);
-      renderTabla(inputBuscar ? inputBuscar.value : "");
-      modo = "create";
-      folioEditando = null;
-      resetFormularioAlmacen();
-      $(modalRegistro).modal("hide");
+      guardarAlmacen();
     });
   }
 
   if (tbody) {
-    tbody.addEventListener("click", (e) => {
+    tbody.addEventListener("click", async (e) => {
       const tr = e.target.closest("tr");
       if (!tr) return;
 
-      const folio = tr.getAttribute("data-folio");
-      const almacenes = getAlmacenes();
-      const almacen = almacenes.find((a) => a.folio === folio);
+      const idAlmacen = Number(tr.getAttribute("data-id"));
+      if (!idAlmacen) return;
 
-      if (!almacen) return;
-
-      const btnDetalle = e.target.closest(".btn-detalle");
-      if (btnDetalle) {
-        abrirDetalle(almacen);
+      if (e.target.closest(".btn-detalle")) {
+        await abrirDetalle(idAlmacen);
         return;
       }
 
-      const btnEditar = e.target.closest(".btn-editar");
-      if (btnEditar) {
-        abrirEditar(almacen);
+      if (e.target.closest(".btn-editar")) {
+        await abrirEditar(idAlmacen);
         return;
       }
 
-      const btnEliminar = e.target.closest(".btn-eliminar");
-      if (btnEliminar) {
-        if (!confirm(`¿Eliminar el almacén ${folio}?`)) return;
-
-        const nuevos = almacenes.filter((a) => a.folio !== folio);
-        setAlmacenes(nuevos);
-        renderTabla(inputBuscar ? inputBuscar.value : "");
+      if (e.target.closest(".btn-eliminar")) {
+        const almacen = almacenesCache.find((a) => Number(a.id_almacen) === idAlmacen);
+        const folio = almacen ? almacen.folio : idAlmacen;
+        await eliminarAlmacen(idAlmacen, folio);
       }
     });
   }
@@ -349,4 +436,45 @@ document.addEventListener("DOMContentLoaded", () => {
       renderTabla(inputBuscar.value);
     });
   }
+
+  $(modalRegistro).on("show.bs.modal", function () {
+    if (modo !== "edit") {
+      resetFormularioAlmacen();
+    }
+  });
+
+  $(modalRegistro).on("hidden.bs.modal", function () {
+    resetFormularioAlmacen();
+  });
+
+  async function cargarDatosIniciales() {
+  try {
+    almacenesCache = await getAlmacenesAPI();
+    renderTabla();
+  } catch (err) {
+    console.error("Error al cargar almacenes:", err.message);
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center text-danger">
+            Error al cargar almacenes: ${err.message}
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  try {
+    categoriasCache = await getCategoriasAPI();
+    cargarCategoriasSelect();
+  } catch (err) {
+    console.error("Error al cargar categorías:", err.message);
+  }
+
+  renderCategoriasTemporales();
+  actualizarResumenCategorias();
+  actualizarEncabezadoCategorias();
+}
+
+  cargarDatosIniciales();
 });
