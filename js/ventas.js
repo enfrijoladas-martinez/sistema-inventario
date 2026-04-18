@@ -27,6 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const tituloModal = document.getElementById("tituloModal");
   const modalRegistro = "#modalNuevaVenta";
 
+  const IVA = 0.16;
+
   let modo = "create";
   let idVentaEditando = null;
   let detalleVentaTemporal = [];
@@ -148,6 +150,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return Number(valor || 0).toFixed(2);
   }
 
+  function calcularPrecioConIVA(precio) {
+  return Number(precio || 0) * (1 + IVA);
+}
+
   function cargarEstados() {
     if (!selectEstado) return;
 
@@ -181,29 +187,52 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function cargarProductos() {
-    const productos = getProductos();
+  if (!selectProductoVenta) return;
 
-    selectProductoVenta.innerHTML = `
-      <option value="">Elegir producto...</option>
-    `;
+  const productos = getProductos();
 
-    productos.forEach((p) => {
-      selectProductoVenta.innerHTML += `
-        <option value="${p.codigo}" data-precio="${Number(p.precio) || 0}">
-          ${p.descripcion}
-        </option>
-      `;
-    });
-  }
+  selectProductoVenta.innerHTML = "";
+
+  const optionDefault = document.createElement("option");
+  optionDefault.value = "";
+  optionDefault.textContent = "Elegir producto...";
+  selectProductoVenta.appendChild(optionDefault);
+
+  productos.forEach((p) => {
+    const option = document.createElement("option");
+    option.value = p.codigo;
+    option.textContent = p.descripcion;
+    option.setAttribute("data-precio", Number(p.precio) || 0);
+    selectProductoVenta.appendChild(option);
+  });
+}
 
   function calcularTotalTemporal() {
     const total = detalleVentaTemporal.reduce((acc, item) => {
-      return acc + (Number(item.cantidad_vendida) * Number(item.precio_venta));
+      const precioConIVA = calcularPrecioConIVA(item.precio_venta);
+      return acc + (Number(item.cantidad_vendida) * precioConIVA);
     }, 0);
 
     totalVenta.textContent = money(total);
     return total;
   }
+
+  function getOpcionesProductosHTML(idSeleccionado = "") {
+  const productos = getProductos();
+
+  return `
+    <option value="">Elegir producto...</option>
+    ${productos.map((p) => `
+      <option 
+        value="${p.codigo}" 
+        data-precio="${Number(p.precio) || 0}"
+        ${String(p.codigo) === String(idSeleccionado) ? "selected" : ""}
+      >
+        ${p.descripcion}
+      </option>
+    `).join("")}
+  `;
+}
 
   function renderDetalleTemporal() {
     if (!tbodyDetalleVenta) return;
@@ -211,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (detalleVentaTemporal.length === 0) {
       tbodyDetalleVenta.innerHTML = `
         <tr>
-          <td colspan="5" class="text-muted">No hay productos agregados.</td>
+          <td colspan="6" class="text-muted">No hay productos agregados.</td>
         </tr>
       `;
       calcularTotalTemporal();
@@ -219,13 +248,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     tbodyDetalleVenta.innerHTML = detalleVentaTemporal.map((item, index) => {
-      const importe = Number(item.cantidad_vendida) * Number(item.precio_venta);
+      const precioBase = Number(item.precio_venta) || 0;
+      const precioConIVA = calcularPrecioConIVA(precioBase);
+      const importe = Number(item.cantidad_vendida) * precioConIVA;
 
+      if (modo === "edit") {
+      return `
+        <tr data-index="${index}">
+          <td>
+            <select class="form-control form-control-sm detalle-producto">
+              ${getOpcionesProductosHTML(item.id_producto)}
+            </select>
+          </td>
+          <td>
+            <input 
+              type="number" 
+              min="1" 
+              class="form-control form-control-sm detalle-cantidad" 
+              value="${Number(item.cantidad_vendida) || 1}"
+            >
+          </td>
+          <td>
+            <input 
+              type="number" 
+              min="0" 
+              step="0.01" 
+              class="form-control form-control-sm detalle-precio" 
+              value="${precioBase}"
+            >
+          </td>
+          <td class="detalle-precio-iva">$${money(precioConIVA)}</td>
+          <td class="detalle-importe">$${money(importe)}</td>
+          <td>
+            <button type="button" class="btn btn-danger btn-sm btn-quitar-detalle">
+              Quitar
+            </button>
+          </td>
+        </tr>
+      `;
+    }
       return `
         <tr data-index="${index}">
           <td>${item.nombre_producto}</td>
           <td>${item.cantidad_vendida}</td>
-          <td>$${money(item.precio_venta)}</td>
+          <td>$${money(precioBase)}</td>
+          <td>$${money(precioConIVA)}</td>
           <td>$${money(importe)}</td>
           <td>
             <button type="button" class="btn btn-danger btn-sm btn-quitar-detalle">
@@ -239,23 +306,81 @@ document.addEventListener("DOMContentLoaded", () => {
     calcularTotalTemporal();
   }
 
-  function resetFormulario() {
-    form.reset();
-    detalleVentaTemporal = [];
-    modo = "create";
-    idVentaEditando = null;
+  function recalcularImporteFila(tr) {
+  const index = Number(tr.getAttribute("data-index"));
+  const item = detalleVentaTemporal[index];
+  if (!item) return;
 
-    totalVenta.textContent = "0.00";
-    renderDetalleTemporal();
+  const precioBase = Number(item.precio_venta) || 0;
+  const precioConIVA = calcularPrecioConIVA(precioBase);
+  const importe = Number(item.cantidad_vendida) * precioConIVA;
 
-    const ventas = getVentas();
-    inpFolio.value = generarFolioVenta(ventas);
+  const celdaPrecioIVA = tr.querySelector(".detalle-precio-iva");
+  const celdaImporte = tr.querySelector(".detalle-importe");
 
-    if (selectEstado) selectEstado.value = "";
-    if (selectMunicipio) {
-      selectMunicipio.innerHTML = `<option value="">Elegir municipio...</option>`;
-    }
+  if (celdaPrecioIVA) {
+    celdaPrecioIVA.textContent = `$${money(precioConIVA)}`;
   }
+
+  if (celdaImporte) {
+    celdaImporte.textContent = `$${money(importe)}`;
+  }
+
+  calcularTotalTemporal();
+}
+
+function actualizarDetalleDesdeFila(tr) {
+  const index = Number(tr.getAttribute("data-index"));
+  const item = detalleVentaTemporal[index];
+  if (!item) return;
+
+  const selectProducto = tr.querySelector(".detalle-producto");
+  const inputCantidad = tr.querySelector(".detalle-cantidad");
+  const inputPrecio = tr.querySelector(".detalle-precio");
+
+  if (selectProducto) {
+    const option = selectProducto.options[selectProducto.selectedIndex];
+    item.id_producto = norm(selectProducto.value);
+    item.nombre_producto = option?.text || "";
+  }
+
+  if (inputCantidad) {
+    item.cantidad_vendida = Number(inputCantidad.value) || 0;
+  }
+
+  if (inputPrecio) {
+    item.precio_venta = Number(inputPrecio.value) || 0;
+  }
+
+  recalcularImporteFila(tr);
+}
+
+  function resetFormulario() {
+  detalleVentaTemporal = [];
+  modo = "create";
+  idVentaEditando = null;
+
+  form.reset();
+
+  totalVenta.textContent = "0.00";
+  renderDetalleTemporal();
+
+  const ventas = getVentas();
+  inpFolio.value = generarFolioVenta(ventas);
+
+  if (selectEstado) selectEstado.value = "";
+  if (selectMunicipio) {
+    selectMunicipio.innerHTML = `<option value="">Elegir municipio...</option>`;
+  }
+
+  if (selectProductoVenta) {
+    cargarProductos();
+    selectProductoVenta.value = "";
+  }
+
+  if (inpCantidadVenta) inpCantidadVenta.value = "";
+  if (inpPrecioVenta) inpPrecioVenta.value = "";
+}
 
   function renderTabla(filtro = "") {
     const f = norm(filtro).toLowerCase();
@@ -445,18 +570,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 <th>Producto</th>
                 <th>Cantidad</th>
                 <th>Precio</th>
+                <th>Precio con IVA</th>
                 <th>Importe</th>
               </tr>
             </thead>
             <tbody>
-              ${detalles.map((d) => `
+              ${detalles.map((d) => {
+                const precioBase = Number(d.precio_venta) || 0;
+                const precioConIVA = Number(d.precio_venta_con_iva) || calcularPrecioConIVA(precioBase);
+                const importe = Number(d.cantidad_vendida) * precioConIVA;
+
+                return `
                 <tr>
                   <td>${d.nombre_producto}</td>
                   <td>${d.cantidad_vendida}</td>
-                  <td>$${money(d.precio_venta)}</td>
-                  <td>$${money(Number(d.cantidad_vendida) * Number(d.precio_venta))}</td>
+                  <td>$${money(precioBase)}</td>
+                  <td>$${money(precioConIVA)}</td>
+                  <td>$${money(importe)}</td>
                 </tr>
-              `).join("")}
+              `;
+              }).join("")}
             </tbody>
           </table>
         </div>
@@ -467,6 +600,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function abrirEditar(venta) {
+    cargarProductos();
     const detalles = getDetalleVentas().filter(
       (d) => Number(d.id_venta) === Number(venta.id_venta)
     );
@@ -488,19 +622,12 @@ document.addEventListener("DOMContentLoaded", () => {
       id_almacen: d.id_almacen || "",
       nombre_almacen: d.nombre_almacen || ""
     }));
-    console.log("venta.id_estado:", venta.id_estado);
-console.log("venta.id_municipio:", venta.id_municipio);
-console.log("selectEstado antes:", selectEstado.value);
 
 selectEstado.value = venta.id_estado || "";
-console.log("selectEstado después:", selectEstado.value);
 
 cargarMunicipios(venta.id_estado || "", venta.id_municipio || "");
 
-console.log("municipios cargados:", selectMunicipio.innerHTML);
-
 selectMunicipio.value = venta.id_municipio || "";
-console.log("selectMunicipio final:", selectMunicipio.value);
 
     renderDetalleTemporal();
 
@@ -517,6 +644,11 @@ console.log("selectMunicipio final:", selectMunicipio.value);
 
   if (selectEstado) {
     selectEstado.addEventListener("change", () => {
+      if (!selectEstado.value) {
+        selectMunicipio.innerHTML = `<option value="">Elegir municipio...</option>`;
+        return;
+      }
+      
       cargarMunicipios(selectEstado.value);
     });
   }
@@ -557,7 +689,7 @@ console.log("selectMunicipio final:", selectMunicipio.value);
       }
 
       const idxExistente = detalleVentaTemporal.findIndex(
-        (item) => item.id_producto === idProducto
+        (item) => String(item.id_producto) === String(idProducto)
       );
 
       if (idxExistente !== -1) {
@@ -594,9 +726,59 @@ console.log("selectMunicipio final:", selectMunicipio.value);
       detalleVentaTemporal.splice(index, 1);
       renderDetalleTemporal();
     });
-  }
 
-  $(modalRegistro).on("show.bs.modal", function () {
+  tbodyDetalleVenta.addEventListener("change", (e) => {
+    const tr = e.target.closest("tr");
+    if (!tr) return;
+
+    if (e.target.classList.contains("detalle-producto")) {
+      const index = Number(tr.getAttribute("data-index"));
+      const item = detalleVentaTemporal[index];
+      if (!item) return;
+
+      const select = e.target;
+      const option = select.options[select.selectedIndex];
+      const nuevoIdProducto = norm(select.value);
+
+      if (!nuevoIdProducto) return;
+
+      const existeRepetido = detalleVentaTemporal.some((prod, i) =>
+        i !== index && String(prod.id_producto) === String(nuevoIdProducto)
+      );
+
+      if (existeRepetido) {
+        alert("Ese producto ya está agregado en la venta.");
+        select.value = item.id_producto;
+        return;
+      }
+
+      item.id_producto = nuevoIdProducto;
+      item.nombre_producto = option?.text || "";
+      item.precio_venta = Number(option?.getAttribute("data-precio") || 0);
+
+      const inputPrecio = tr.querySelector(".detalle-precio");
+      if (inputPrecio) {
+        inputPrecio.value = item.precio_venta;
+      }
+
+      actualizarDetalleDesdeFila(tr);
+    }
+  });
+
+  tbodyDetalleVenta.addEventListener("input", (e) => {
+    const tr = e.target.closest("tr");
+    if (!tr) return;
+
+    if (
+      e.target.classList.contains("detalle-cantidad") ||
+      e.target.classList.contains("detalle-precio")
+    ) {
+      actualizarDetalleDesdeFila(tr);
+    }
+  });
+}
+
+  $(modalRegistro).on("shown.bs.modal", function () {
     cargarProductos();
     cargarEstados();
 
@@ -618,17 +800,17 @@ console.log("selectMunicipio final:", selectMunicipio.value);
       e.preventDefault();
 
       const folio = norm(inpFolio.value);
-      const estado = norm(selectEstado.value);
-      const municipio = norm(selectMunicipio.value);
+      const estado = norm(selectEstado.value) || null;
+      const municipio = norm(selectMunicipio.value)|| null;
 
-      const nombreEstado =
-        selectEstado.options[selectEstado.selectedIndex]?.text || "";
+      const nombreEstado = estado ? 
+        (selectEstado.options[selectEstado.selectedIndex]?.text || null) :null;
 
-      const nombreMunicipio =
-        selectMunicipio.options[selectMunicipio.selectedIndex]?.text || "";
+      const nombreMunicipio = municipio ? 
+        (selectMunicipio.options[selectMunicipio.selectedIndex]?.text || null):null;
 
-      if (!folio || !estado || !municipio) {
-        alert("Completa folio, estado y municipio");
+      if (!folio) {
+        alert("Completa el folio");
         return;
       }
 
@@ -669,6 +851,7 @@ console.log("selectMunicipio final:", selectMunicipio.value);
               id_detalle_venta: siguienteIdDetalle++,
               cantidad_vendida: Number(item.cantidad_vendida),
               precio_venta: Number(item.precio_venta),
+              precio_venta_con_iva: calcularPrecioConIVA(item.precio_venta),
               id_venta: idVenta,
               id_producto: item.id_producto,
               nombre_producto: item.nombre_producto,
@@ -736,6 +919,7 @@ console.log("selectMunicipio final:", selectMunicipio.value);
             id_detalle_venta: siguienteIdDetalle++,
             cantidad_vendida: Number(item.cantidad_vendida),
             precio_venta: Number(item.precio_venta),
+            precio_venta_con_iva: calcularPrecioConIVA(item.precio_venta),
             id_venta: idVentaEditando,
             id_producto: item.id_producto,
             nombre_producto: item.nombre_producto,

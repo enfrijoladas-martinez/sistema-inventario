@@ -1,8 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-
-  const STORAGE_KEY = "inventarios_v1";
-  const PRODUCTOS_KEY = "productos_v1";
-  const ALMACENES_KEY = "almacenes_v1";
+  const API_BASE = "http://143.198.230.63";
 
   const btnGuardar = document.getElementById("btnGuardarInventario");
   const form = document.getElementById("formularioInventario");
@@ -17,111 +14,131 @@ document.addEventListener("DOMContentLoaded", () => {
   const tituloModal = document.getElementById("tituloModal");
   const modalRegistro = "#modalNuevoInventario";
 
-  let modo = "create";
-  let idEditando = null;
+  let inventariosCache = [];
+  let productosCache = [];
+  let almacenesCache = [];
 
   const norm = (v) => (v ?? "").toString().trim();
 
-  const getInventarios = () => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    } catch {
-      return [];
+  function money(valor) {
+    return Number(valor || 0).toFixed(2);
+  }
+
+  async function apiFetch(endpoint, options = {}) {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      },
+      ...options
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(data?.message || "Error en la petición");
     }
-  };
 
-  const setInventarios = (arr) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-  };
+    return data;
+  }
 
-  const getProductos = () => {
-    try {
-      return JSON.parse(localStorage.getItem(PRODUCTOS_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  };
+  async function getInventariosAPI() {
+    const res = await apiFetch("/api/inventarios/");
+    return Array.isArray(res.data) ? res.data : [];
+  }
 
-  const getAlmacenes = () => {
-    try {
-      return JSON.parse(localStorage.getItem(ALMACENES_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  };
+  async function getInventarioDetalleAPI(idInventario) {
+    const res = await apiFetch(`/api/inventarios/${idInventario}`);
+    return res.data || null;
+  }
 
-  function generarId(inventarios) {
-    const numero = inventarios.length + 1;
-    return `INV-${String(numero).padStart(3, "0")}`;
+  async function crearInventarioAPI(payload) {
+    return await apiFetch("/api/inventarios/", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async function eliminarInventarioAPI(idInventario) {
+    return await apiFetch(`/api/inventarios/${idInventario}`, {
+      method: "DELETE"
+    });
+  }
+
+  async function getProductosAPI() {
+    const res = await apiFetch("/api/productos/");
+    return Array.isArray(res.data) ? res.data : [];
+  }
+
+  async function getAlmacenesAPI() {
+    const res = await apiFetch("/api/almacenes/");
+    return Array.isArray(res.data) ? res.data : [];
   }
 
   function cargarProductos() {
-    const productos = getProductos();
-
     selectProducto.innerHTML = `
       <option value="">Elegir producto...</option>
     `;
 
-    productos.forEach((p) => {
-      selectProducto.innerHTML += `
-        <option value="${p.codigo}">
-          ${p.descripcion}
-        </option>
-      `;
+    productosCache.forEach((p) => {
+      const option = document.createElement("option");
+      option.value = p.id_producto;
+      option.textContent =
+        p.descripcion_producto || p.nombre_producto || p.descripcion || `Producto ${p.id_producto}`;
+      selectProducto.appendChild(option);
     });
   }
 
   function cargarAlmacenes() {
-    const almacenes = getAlmacenes();
-
     selectAlmacen.innerHTML = `
       <option value="">Elegir almacén...</option>
     `;
 
-    almacenes.forEach((a) => {
-      selectAlmacen.innerHTML += `
-        <option value="${a.folio}">
-          ${a.nombre}
-        </option>
-      `;
+    almacenesCache.forEach((a) => {
+      const option = document.createElement("option");
+      option.value = a.id_almacen;
+      option.textContent =
+        a.nombre_almacen || a.nombre || a.descripcion || `Almacén ${a.id_almacen}`;
+      selectAlmacen.appendChild(option);
     });
-  }
-
-  function obtenerEstado(stock, min) {
-    return Number(stock) <= Number(min) ? "Stock bajo" : "Stock OK";
   }
 
   function renderTabla(filtro = "") {
     const f = norm(filtro).toLowerCase();
-    const inventarios = getInventarios();
 
     const lista = !f
-      ? inventarios
-      : inventarios.filter((i) => {
+      ? inventariosCache
+      : inventariosCache.filter((i) => {
           const texto = `
-            ${i.nombre_producto}
-            ${i.nombre_almacen}
-            ${i.stock}
-            ${i.min_stock}
+            ${i.descripcion_producto || ""}
+            ${i.nombre_almacen || ""}
+            ${i.stock || ""}
+            ${i.min_stock || ""}
           `.toLowerCase();
 
           return texto.includes(f);
         });
 
+    if (!lista.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center text-muted">No hay inventarios registrados.</td>
+        </tr>
+      `;
+      return;
+    }
+
     tbody.innerHTML = lista.map((i) => `
       <tr data-id="${i.id_inventario}">
-        <td>${i.nombre_producto}</td>
-        <td>${i.nombre_almacen}</td>
-        <td>${i.stock}</td>
-        <td>${i.min_stock}</td>
+        <td>${i.descripcion_producto || ""}</td>
+        <td>${i.nombre_almacen || ""}</td>
+        <td>${i.stock ?? 0}</td>
+        <td>${i.min_stock ?? 0}</td>
         <td>
-          <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle">
+          <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle">
             <i class="fas fa-eye"></i>
           </button>
-          <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar">
-            <i class="fas fa-pen"></i>
-          </button>
-          <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar">
+          <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar">
             <i class="fas fa-trash"></i>
           </button>
         </td>
@@ -131,159 +148,123 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function resetFormulario() {
     form.reset();
-    modo = "create";
-    idEditando = null;
+    tituloModal.textContent = "Registrar Inventario";
   }
 
-  function abrirEditar(inv) {
-    modo = "edit";
-    idEditando = inv.id_inventario;
+  async function abrirDetalle(idInventario) {
+    try {
+      const inv = await getInventarioDetalleAPI(idInventario);
 
-    selectProducto.value = inv.id_producto;
-    selectAlmacen.value = inv.id_almacen;
-    inpStock.value = inv.stock;
-    inpMinStock.value = inv.min_stock;
+      if (!inv) {
+        alert("No se pudo obtener el detalle del inventario");
+        return;
+      }
 
-    tituloModal.textContent = "Editar Inventario";
+      document.getElementById("detalleIdInventario").textContent = inv.id_inventario ?? "";
+      document.getElementById("detalleProducto").textContent = inv.descripcion_producto ?? "";
+      document.getElementById("detalleFolioProducto").textContent = inv.folio_producto ?? "";
+      document.getElementById("detalleAlmacen").textContent = inv.nombre_almacen ?? "";
+      document.getElementById("detalleFolioAlmacen").textContent = inv.folio_almacen ?? "";
+      document.getElementById("detalleStock").textContent = inv.stock ?? 0;
+      document.getElementById("detalleMinStock").textContent = inv.min_stock ?? 0;
+      document.getElementById("detalleCostoProducto").textContent = `$${money(inv.costo_producto)}`;
+      document.getElementById("detallePrecioProducto").textContent = `$${money(inv.precio_producto)}`;
 
-    $(modalRegistro).modal("show");
+      $("#modalDetalleInventario").modal("show");
+    } catch (error) {
+      alert(error.message);
+    }
   }
 
-  function abrirDetalle(inv) {
+  async function cargarDatosIniciales() {
+    try {
+      const [inventarios, productos, almacenes] = await Promise.all([
+        getInventariosAPI(),
+        getProductosAPI(),
+        getAlmacenesAPI()
+      ]);
 
-    const detalleProducto = document.getElementById("detalleProducto");
-    const detalleAlmacen = document.getElementById("detalleAlmacen");
-    const detalleStock = document.getElementById("detalleStock");
-    const detalleMinStock = document.getElementById("detalleMinStock");
-    const detalleAcciones = document.getElementById("detalleAcciones");
+      inventariosCache = inventarios;
+      productosCache = productos;
+      almacenesCache = almacenes;
 
-    detalleProducto.textContent = inv.nombre_producto;
-    detalleAlmacen.textContent = inv.nombre_almacen;
-    detalleStock.textContent = inv.stock;
-    detalleMinStock.textContent = inv.min_stock;
-    detalleEstado.textContent = obtenerEstado(inv.stock, inv.min_stock);
-
-    $("#modalDetalleInventario").modal("show");
+      cargarProductos();
+      cargarAlmacenes();
+      renderTabla();
+    } catch (error) {
+      alert(`Error al cargar datos iniciales: ${error.message}`);
+    }
   }
-
-  cargarProductos();
-  cargarAlmacenes();
-  renderTabla();
 
   $(modalRegistro).on("show.bs.modal", function () {
-    if (modo !== "edit") {
-      resetFormulario();
-      tituloModal.textContent = "Registrar Inventario";
-    }
+    resetFormulario();
   });
 
   if (btnGuardar) {
-    btnGuardar.addEventListener("click", (e) => {
+    btnGuardar.addEventListener("click", async (e) => {
       e.preventDefault();
 
-      const idProducto = norm(selectProducto.value);
-      const idAlmacen = norm(selectAlmacen.value);
+      const idProducto = Number(selectProducto.value);
+      const idAlmacen = Number(selectAlmacen.value);
       const stock = Number(inpStock.value);
       const minStock = Number(inpMinStock.value);
-
-      const nombreProducto =
-        selectProducto.options[selectProducto.selectedIndex]?.text || "";
-
-      const nombreAlmacen =
-        selectAlmacen.options[selectAlmacen.selectedIndex]?.text || "";
 
       if (!idProducto || !idAlmacen) {
         alert("Selecciona producto y almacén");
         return;
       }
 
-      const inventarios = getInventarios();
+      if (isNaN(stock) || stock < 0 || isNaN(minStock) || minStock < 0) {
+        alert("Ingresa valores válidos para stock y stock mínimo");
+        return;
+      }
 
-      if (modo === "create") {
-
-        const yaExiste = inventarios.some(
-          (i) => i.id_producto === idProducto && i.id_almacen === idAlmacen
-        );
-
-        if (yaExiste) {
-          alert("Ese producto ya está registrado en ese almacén");
-          return;
-        }
-
-        inventarios.push({
-          id_inventario: generarId(inventarios),
+      try {
+        await crearInventarioAPI({
           id_producto: idProducto,
-          nombre_producto: nombreProducto,
           id_almacen: idAlmacen,
-          nombre_almacen: nombreAlmacen,
           stock,
           min_stock: minStock
         });
 
-        setInventarios(inventarios);
+        inventariosCache = await getInventariosAPI();
         renderTabla(inputBuscar ? inputBuscar.value : "");
         resetFormulario();
         $(modalRegistro).modal("hide");
-        return;
+        alert("Inventario creado correctamente");
+      } catch (error) {
+        alert(error.message);
       }
-
-      const idx = inventarios.findIndex((i) => i.id_inventario === idEditando);
-
-      inventarios[idx] = {
-        ...inventarios[idx],
-        id_producto: idProducto,
-        nombre_producto: nombreProducto,
-        id_almacen: idAlmacen,
-        nombre_almacen: nombreAlmacen,
-        stock,
-        min_stock: minStock
-      };
-
-      setInventarios(inventarios);
-      renderTabla(inputBuscar ? inputBuscar.value : "");
-      resetFormulario();
-      $(modalRegistro).modal("hide");
     });
   }
 
   if (tbody) {
-    tbody.addEventListener("click", (e) => {
-
+    tbody.addEventListener("click", async (e) => {
       const tr = e.target.closest("tr");
       if (!tr) return;
 
-      const id = tr.getAttribute("data-id");
-      const inventarios = getInventarios();
-      const inv = inventarios.find((i) => i.id_inventario === id);
-
-      if (!inv) return;
+      const idInventario = Number(tr.getAttribute("data-id"));
+      if (!idInventario) return;
 
       if (e.target.closest(".btn-detalle")) {
-        abrirDetalle(inv);
-        return;
-      }
-
-      if (e.target.closest(".btn-editar")) {
-        abrirEditar(inv);
+        await abrirDetalle(idInventario);
         return;
       }
 
       if (e.target.closest(".btn-eliminar")) {
-
         if (!confirm("¿Eliminar inventario?")) return;
 
-        const nuevos = inventarios.filter((i) => i.id_inventario !== id);
-
-        setInventarios(nuevos);
-        renderTabla(inputBuscar ? inputBuscar.value : "");
+        try {
+          await eliminarInventarioAPI(idInventario);
+          inventariosCache = await getInventariosAPI();
+          renderTabla(inputBuscar ? inputBuscar.value : "");
+          alert("Inventario eliminado correctamente");
+        } catch (error) {
+          alert(error.message);
+        }
       }
     });
   }
-
-  if (isNaN(stock) || stock < 0 || isNaN(minStock) || minStock < 0) {
-  alert("Ingresa valores válidos para stock y stock mínimo");
-  return;
-}
 
   if (inputBuscar) {
     inputBuscar.addEventListener("input", () => {
@@ -291,4 +272,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  cargarDatosIniciales();
 });
