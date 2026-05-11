@@ -323,8 +323,10 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       if (modo === "create") {
         await crearAlmacenAPI(payload);
+        Swal.fire({ icon: "success", title: "Éxito", text: "Almacén creado con éxito", confirmButtonText: "Aceptar" });
       } else {
         await editarAlmacenAPI(idEditando, payload);
+        Swal.fire({ icon: "success", title: "Éxito", text: "Almacén editado con éxito", confirmButtonText: "Aceptar" });
       }
 
       almacenesCache = await getAlmacenesAPI();
