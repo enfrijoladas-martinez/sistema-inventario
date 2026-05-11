@@ -60,7 +60,7 @@ Sistema web desarrollado para automatizar y centralizar la gestión operativa de
 ├── movimientos.html        # Historial de movimientos
 ├── almacen.html            # Gestión de almacenes
 ├── categorias.html         # Catálogo de categorías
-├── subcategorias.html      # Catálogo de subcategorías
+
 ├── reportes.html          # Reportes y análisis
 ├── usuarios.html           # Gestión de usuarios
 ├── js/
@@ -71,7 +71,7 @@ Sistema web desarrollado para automatizar y centralizar la gestión operativa de
 │   ├── movimientos.js
 │   ├── almacen.js
 │   ├── categorias.js
-│   ├── subcategorias.js
+
 │   └── reportes.js
 ├── css/
 ├── img/

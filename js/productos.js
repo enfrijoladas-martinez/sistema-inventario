@@ -2,10 +2,8 @@ const API_BASE = "http://146.190.165.82";
 
 let productos = [];
 let categoriasDisponibles = [];
-let subcategoriasDisponibles = [];
 
 let categoriasTemporales = [];
-let subcategoriasTemporales = [];
 
 let modo = "create";
 let idProductoEditando = null;
@@ -13,21 +11,12 @@ let idProductoEditando = null;
 document.addEventListener("DOMContentLoaded", () => {
     cargarProductos();
     cargarCategorias();
-    cargarSubcategorias();
-
     const btnGuardarProducto = document.getElementById("btnGuardarProducto");
     const buscarProductos = document.getElementById("buscarProductos");
     const btnAbrirCategoriasProducto = document.getElementById("btnAbrirCategoriasProducto");
     const btnCerrarCategorias = document.getElementById("btnCerrarCategorias");
     const btnCerrarCategoriasX = document.getElementById("btnCerrarCategoriasX");
     const btnAgregarCategoriaProducto = document.getElementById("btnAgregarCategoriaProducto");
-
-    const btnAbrirSubcategorias = document.getElementById("btnAbrirSubcategorias");
-    const btnCerrarSubcategorias = document.getElementById("btnCerrarSubcategorias");
-    const btnCerrarSubcategoriasX = document.getElementById("btnCerrarSubcategoriasX");
-    const btnAgregarSubcategoria = document.getElementById("btnAgregarSubcategoria");
-    const selectNuevaSubcategoria = document.getElementById("selectNuevaSubcategoria");
-
     const btnDescargarPlantilla = document.getElementById("btnDescargarPlantilla");
     const btnCargaMasiva = document.getElementById("btnCargaMasiva");
 
@@ -54,27 +43,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnAgregarCategoriaProducto) {
         btnAgregarCategoriaProducto.addEventListener("click", agregarCategoriaTemporal);
     }
-
-    if (btnAbrirSubcategorias) {
-        btnAbrirSubcategorias.addEventListener("click", abrirModalSubcategorias);
-    }
-
-    if (btnCerrarSubcategorias) {
-        btnCerrarSubcategorias.addEventListener("click", cerrarModalSubcategorias);
-    }
-
-    if (btnCerrarSubcategoriasX) {
-        btnCerrarSubcategoriasX.addEventListener("click", cerrarModalSubcategorias);
-    }
-
-    if (btnAgregarSubcategoria) {
-        btnAgregarSubcategoria.addEventListener("click", agregarSubcategoriaTemporal);
-    }
-
-    if (selectNuevaSubcategoria) {
-        selectNuevaSubcategoria.addEventListener("change", cargarValoresSubcategoriaSeleccionada);
-    }
-
     if (btnDescargarPlantilla) {
         btnDescargarPlantilla.addEventListener("click", descargarPlantillaProductos);
     }
@@ -362,19 +330,7 @@ async function abrirEditarProducto(idProducto) {
             id_cat: cat.id_cat || cat.id_categoria || cat.id,
             nombre: cat.nombre || cat.descripcion || "Categoría"
         }));
-
-        subcategoriasTemporales = (producto.subcategorias || []).map((sub) => ({
-            id_subcat: sub.id_subcat || sub.id_subcategoria || sub.id,
-            nombre: sub.nombre || sub.descripcion || "Subcategoría",
-            valor_numerico: sub.valor_numerico || sub.valor || "",
-            unidad: sub.unidad || ""
-        }));
-
-        actualizarResumenCategorias();
-        actualizarResumenSubcategorias();
-        renderizarCategoriasTemporales();
-        renderizarSubcategoriasTemporales();
-
+        actualizarResumenCategorias();        renderizarCategoriasTemporales();
         document.getElementById("tituloModal").textContent = "Editar Producto";
         $("#modalNuevoProducto").modal("show");
 
@@ -417,18 +373,6 @@ async function verDetalleProducto(idProducto) {
         setText("detalleCosto", formatoMoneda(producto.costo || 0));
         setText("detallePrecio", formatoMoneda(producto.precio || 0));
         setText("detalleCategorias", obtenerCategoriasTexto(producto));
-
-        const subcategorias = producto.subcategorias || [];
-        const subTexto = subcategorias.length
-            ? subcategorias.map((sub) => {
-                const valor = sub.valor_numerico || "";
-                const unidad = sub.unidad || "";
-                return `${sub.nombre} ${valor} ${unidad}`.trim();
-            }).join(", ")
-            : "Sin subcategorías";
-
-        setText("detalleSubcategorias", subTexto);
-
         $("#modalDetalleProducto").modal("show");
 
     } catch (error) {
@@ -514,9 +458,6 @@ function actualizarResumenCategorias() {
 function abrirModalSubcategorias() {
     setText("subProductoCodigo", document.getElementById("codigoProd")?.value || "Nuevo producto");
     setText("subProductoDescripcion", document.getElementById("descripcionProd")?.value || "Sin definir");
-
-    renderizarSubcategoriasTemporales();
-
     const modal = document.getElementById("modalSubcategoriasProducto");
     if (modal) modal.style.display = "flex";
 }
@@ -590,17 +531,10 @@ function agregarSubcategoriaTemporal() {
 
     selectSub.value = "";
     selectValor.innerHTML = `<option value="">Elegir valor...</option>`;
-    document.getElementById("unidadSubcategoria").value = "";
-
-    actualizarResumenSubcategorias();
-    renderizarSubcategoriasTemporales();
-}
+    document.getElementById("unidadSubcategoria").value = "";}
 
 function eliminarSubcategoriaTemporal(idSub) {
-    subcategoriasTemporales = subcategoriasTemporales.filter((sub) => String(sub.id_subcat) !== String(idSub));
-    actualizarResumenSubcategorias();
-    renderizarSubcategoriasTemporales();
-}
+    subcategoriasTemporales = subcategoriasTemporales.filter((sub) => String(sub.id_subcat) !== String(idSub));}
 
 function renderizarSubcategoriasTemporales() {
     const contenedor = document.getElementById("listaSubcategoriasProducto");
@@ -745,13 +679,7 @@ function limpiarFormularioProducto() {
     setValue("precioProd", "");
 
     categoriasTemporales = [];
-    subcategoriasTemporales = [];
-
-    actualizarResumenCategorias();
-    actualizarResumenSubcategorias();
-    renderizarCategoriasTemporales();
-    renderizarSubcategoriasTemporales();
-
+    actualizarResumenCategorias();    renderizarCategoriasTemporales();
     const inputCodigo = document.getElementById("codigoProd");
     if (inputCodigo) inputCodigo.disabled = false;
 
@@ -781,6 +709,5 @@ window.abrirEditarProducto = abrirEditarProducto;
 window.eliminarProducto = eliminarProducto;
 window.verDetalleProducto = verDetalleProducto;
 window.eliminarCategoriaTemporal = eliminarCategoriaTemporal;
-window.eliminarSubcategoriaTemporal = eliminarSubcategoriaTemporal;
 window.descargarPlantillaProductos = descargarPlantillaProductos;
 window.cargarProductosMasivamente = cargarProductosMasivamente;

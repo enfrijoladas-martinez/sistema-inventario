@@ -134,7 +134,7 @@
                 <a class="nav-link" href="categorias.html"><i class="fas fa-fw fa-tags"></i><span>Categorías</span></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="subcategorias.html"><i class="fas fa-fw fa-layer-group"></i><span>Subcategorías</span></a>
+
             </li>
 
             <li class="nav-item">
@@ -367,15 +367,7 @@
     </div>
 </div>
 
-<div class="form-group">
-    <label class="mb-2">Subcategorías del producto</label>
-    <div class="d-flex align-items-center flex-wrap">
-        <button type="button" class="btn btn-success btn-sm" id="btnAbrirSubcategorias">
-            Administrar subcategorías
-        </button>
-        <span class="ml-3 text-muted" id="resumenSubcategoriasProducto">0 subcategorías registradas</span>
-    </div>
-</div>
+
 
 </form>
 </div>
@@ -427,57 +419,6 @@
     </div>
 </div>
 
-<div id="modalSubcategoriasProducto" class="ventana-secundaria-overlay" style="display: none;">
-    <div class="ventana-secundaria-contenido">
-        <div class="ventana-secundaria-header bg-success text-white d-flex justify-content-between align-items-center px-3 py-2">
-            <h5 class="mb-0">Subcategorías del producto</h5>
-            <button type="button" class="close text-white" id="btnCerrarSubcategoriasX" aria-label="Cerrar">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-
-        <div class="p-3">
-            <p class="mb-1"><strong>Código:</strong> <span id="subProductoCodigo">Nuevo producto</span></p>
-            <p><strong>Descripción:</strong> <span id="subProductoDescripcion">Sin definir</span></p>
-
-            <div class="form-row align-items-end">
-                <div class="form-group col-md-4">
-                    <label for="selectNuevaSubcategoria">Subcategoría</label>
-                    <select id="selectNuevaSubcategoria" class="form-control">
-                        <option value="" selected>Elegir subcategoría...</option>
-                    </select>
-                </div>
-
-                <div class="form-group col-md-3">
-                    <label for="valorSubcategoria">Valor</label>
-                    <select id="valorSubcategoria" class="form-control">
-                        <option value="">Elegir valor...</option>
-                    </select>
-                </div>
-
-                <div class="form-group col-md-3">
-                    <label for="unidadSubcategoria">Unidad</label>
-                    <input type="text" class="form-control" id="unidadSubcategoria" readonly>
-                </div>
-
-                <div class="form-group col-md-2">
-                    <button type="button" class="btn btn-success btn-block" id="btnAgregarSubcategoria">
-                        Agregar
-                    </button>
-                </div>
-            </div>
-
-            <div id="listaSubcategoriasProducto" class="mt-3"></div>
-        </div>
-
-        <div class="px-3 pb-3 text-right">
-            <button type="button" class="btn btn-secondary" id="btnCerrarSubcategorias">
-                Cerrar
-            </button>
-        </div>
-    </div>
-</div>
-
 <div class="modal fade" id="modalDetalleProducto" tabindex="-1" role="dialog" aria-labelledby="tituloDetalleProducto" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -495,7 +436,7 @@
                 <p><strong>Costo:</strong> <span id="detalleCosto"></span></p>
                 <p><strong>Precio:</strong> <span id="detallePrecio"></span></p>
                 <p><strong>Categorías:</strong> <span id="detalleCategorias"></span></p>
-                <p><strong>Subcategorías:</strong> <span id="detalleSubcategorias"></span></p>
+                
             </div>
 
             <div class="modal-footer">
@@ -525,3 +466,6 @@
     <script src="js/productos.js"></script>
 </body>
 </html>
+
+
+
