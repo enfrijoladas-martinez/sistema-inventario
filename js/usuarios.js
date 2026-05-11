@@ -26,6 +26,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (!result.success) {
+        if (response.status === 401 || response.status === 403 || String(result.message).toLowerCase().includes('token')) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Sesión expirada o inválida',
+                text: 'Tu sesión o token ha expirado. Por favor, cierra sesión y vuelve a entrar para continuar.',
+                confirmButtonText: 'Entendido'
+            });
+        }
         throw new Error(result.message || "No se pudieron obtener los usuarios.");
       }
 
@@ -205,6 +213,15 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Respuesta crear usuario:", result);
 
       if (!result.success) {
+        if (String(result.message).toLowerCase().includes('token')) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Sesión expirada o inválida',
+                text: 'Tu sesión o token ha expirado. Por favor, cierra sesión y vuelve a entrar para continuar.',
+                confirmButtonText: 'Entendido'
+            });
+            return;
+        }
         Swal.fire({ icon: "error", title: "Error", text: result.message || "No se pudo guardar el usuario.", confirmButtonText: "Aceptar" });
         return;
       }
@@ -256,6 +273,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const result = await eliminarUsuario(id);
 
         if (!result.success) {
+          if (String(result.message).toLowerCase().includes('token')) {
+              Swal.fire({
+                  icon: 'warning',
+                  title: 'Sesión expirada o inválida',
+                  text: 'Tu sesión o token ha expirado. Por favor, cierra sesión y vuelve a entrar para continuar.',
+                  confirmButtonText: 'Entendido'
+              });
+              return;
+          }
           Swal.fire({ icon: "error", title: "Error", text: result.message || "No se pudo eliminar el usuario.", confirmButtonText: "Aceptar" });
           return;
         }

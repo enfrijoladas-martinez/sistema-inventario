@@ -131,6 +131,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Sesión expirada o inválida',
+          text: 'Tu sesión o token ha expirado. Por favor, cierra sesión y vuelve a entrar para continuar.',
+          confirmButtonText: 'Entendido'
+        });
+      }
       throw new Error(data?.message || "Error en la petición");
     }
 

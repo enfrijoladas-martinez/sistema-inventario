@@ -51,6 +51,14 @@ async function obtenerDatos(endpoint, params = {}) {
         const result = await response.json();
 
         if (!response.ok || result.success === false) {
+            if (response.status === 401 || response.status === 403 || String(result.message).toLowerCase().includes('token')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Sesión expirada o inválida',
+                    text: 'Tu sesión o token ha expirado. Por favor, cierra sesión y vuelve a entrar para continuar.',
+                    confirmButtonText: 'Entendido'
+                });
+            }
             throw new Error(result.message || "Error al obtener datos");
         }
 

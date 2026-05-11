@@ -128,8 +128,16 @@ async function fetchBackend(endpoint, options = {}) {
         result = null;
     }
 
-    if (!response.ok || result?.success === false) {
-        throw new Error(result?.message || "Error en la petición.");
+    if (!response.ok || (result && result.success === false)) {
+      if (response.status === 401 || response.status === 403 || (result?.message || "Error en la petición." && String(result?.message || "Error en la petición.").toLowerCase().includes('token'))) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Sesión expirada o inválida',
+          text: 'Tu sesión o token ha expirado. Por favor, cierra sesión y vuelve a entrar para continuar.',
+          confirmButtonText: 'Entendido'
+        });
+      }
+      throw new Error(result?.message || "Error en la petición.");
     }
 
     return result;
@@ -586,6 +594,16 @@ async function descargarPlantillaProductos() {
                 result = null;
             }
 
+            if (response.status === 401 || response.status === 403 || String(result?.message).toLowerCase().includes('token')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Sesión expirada o inválida',
+                    text: 'Tu sesión o token ha expirado. Por favor, cierra sesión y vuelve a entrar para continuar.',
+                    confirmButtonText: 'Entendido'
+                });
+                return;
+            }
+
             Swal.close();
             alertaError(result?.message || "Error al generar la plantilla.");
             return;
@@ -653,6 +671,15 @@ async function cargarProductosMasivamente() {
         Swal.close();
 
         if (!response.ok || result?.success === false) {
+            if (response.status === 401 || response.status === 403 || String(result?.message).toLowerCase().includes('token')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Sesión expirada o inválida',
+                    text: 'Tu sesión o token ha expirado. Por favor, cierra sesión y vuelve a entrar para continuar.',
+                    confirmButtonText: 'Entendido'
+                });
+                return;
+            }
             alertaError(result?.message || "Error al cargar productos.");
             return;
         }

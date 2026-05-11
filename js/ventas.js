@@ -132,6 +132,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Sesión expirada o inválida',
+          text: 'Tu sesión o token ha expirado. Por favor, cierra sesión y vuelve a entrar para continuar.',
+          confirmButtonText: 'Entendido'
+        });
+      }
       const mensaje = (data?.message || data?.error || data?.msg || "Error en la petición");
       throw new Error(mensaje || `Error del servidor (${response.status})`);
     }
