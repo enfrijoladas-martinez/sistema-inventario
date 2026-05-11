@@ -335,7 +335,10 @@ document.addEventListener("DOMContentLoaded", () => {
       text: `¿Eliminar el almacén ${folio}?\n\nTambién se eliminarán todos los inventarios asociados a este almacén.`,
       showCancelButton: true,
       confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar"
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      reverseButtons: true
     });
     if (!result.isConfirmed) return;
 

@@ -57,10 +57,11 @@ document.addEventListener("DOMContentLoaded", () => {
       title: "¿Estás seguro?",
       text: texto,
       showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#6c757d"
+      reverseButtons: true
     });
     return result.isConfirmed;
   }

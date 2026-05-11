@@ -84,6 +84,8 @@ document.addEventListener("DOMContentLoaded", () => {
       title: "¿Estás seguro?",
       text: texto,
       showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
       reverseButtons: true

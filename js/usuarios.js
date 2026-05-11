@@ -239,8 +239,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnEliminar) {
       const id = Number(btnEliminar.dataset.id);
 
-      const confirmado = confirm("¿Seguro que deseas eliminar este usuario?");
-      if (!confirmado) return;
+      const resultConfirm = await Swal.fire({
+        icon: 'warning',
+        title: '¿Estás seguro?',
+        text: '¿Seguro que deseas eliminar este usuario?',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+      });
+      if (!resultConfirm.isConfirmed) return;
 
       try {
         const result = await eliminarUsuario(id);

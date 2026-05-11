@@ -467,7 +467,10 @@ document.addEventListener("DOMContentLoaded", () => {
           text: `¿Eliminar el cliente ${cliente.folio}?\n\nLas ventas asociadas a este cliente se moverán al cliente "Público General".`,
           showCancelButton: true,
           confirmButtonText: "Si, eliminar",
-          cancelButtonText: "Cancelar"
+          cancelButtonText: "Cancelar",
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#6c757d",
+          reverseButtons: true
         });
         if (!result.isConfirmed) return;
         try {

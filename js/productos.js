@@ -93,14 +93,15 @@ function alertaCargando(mensaje) {
 
 async function confirmarAccion(mensaje) {
     const result = await Swal.fire({
-        icon: "warning",
-        title: "¿Estás seguro?",
-        text: mensaje || "Esta acción no se puede deshacer.",
-        showCancelButton: true,
-        confirmButtonText: "Sí, continuar",
-        cancelButtonText: "Cancelar",
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#6c757d"
+      icon: "warning",
+      title: "¿Estás seguro?",
+      text: mensaje || "Esta acción no se puede deshacer.",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Sí, continuar",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true
     });
 
     return result.isConfirmed;
