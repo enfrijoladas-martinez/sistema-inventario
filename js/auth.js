@@ -39,16 +39,9 @@ function init() {
 
     const paginaActual = obtenerPaginaActual();
     const rol = (usuario.rol || "").toLowerCase();
-    const esAdmin = rol === "administrador" || rol === "admin";
-
-    if (!esAdmin && !PAGINAS_EMPLEADO.includes(paginaActual)) {
-        window.location.href = "index.html";
-        return;
-    }
-
-    if (!esAdmin) {
-        ocultarMenusAdmin();
-    }
+    
+    // Si queremos que el rol empleado tenga acceso a todo igual que el administrador
+    // Eliminamos las redirecciones y ocultamiento de menús
 
     actualizarNombreUsuario(usuario);
 }
@@ -84,7 +77,7 @@ function ocultarMenusAdmin() {
 }
 
 function actualizarNombreUsuario(usuario) {
-    const nombreElement = document.getElementById("nombreUsuario");
+    const nombreElement = document.getElementById("nombreUsuarioTopbar");
     if (nombreElement && usuario.nombre_usuario) {
         nombreElement.textContent = usuario.nombre_usuario;
     }
