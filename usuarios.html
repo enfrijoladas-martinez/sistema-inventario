@@ -346,7 +346,7 @@
 
           <div class="form-group">
             <label>Teléfono</label>
-            <input type="text" id="telefonoUsuario" class="form-control">
+            <input type="text" id="telefonoUsuario" class="form-control" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" placeholder="Ej. 1234567890">
           </div>
 
           <div class="form-group">

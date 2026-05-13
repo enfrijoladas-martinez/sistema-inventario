@@ -1,5 +1,6 @@
-const API_URL = "http://146.190.165.82";
-const KEY_TOKEN = "token";
+// Las constantes API_URL y KEY_TOKEN ya están declaradas en auth.js
+// const API_URL = "http://146.190.165.82";
+// const KEY_TOKEN = "token";
 
 const ENDPOINTS = {
     reportes: "/api/reportes/",
@@ -75,46 +76,119 @@ function obtenerParamsFecha() {
     const params = {};
     
     if (fechaInicio) params.fecha_inicio = fechaInicio;
-    if (fechaFinal) params.fecha_final = fechaFinal;
+    if (fechaFinal) {
+        params.fecha_final = fechaFinal; // Mantenemos compatibilidad con endpoints anteriores
+        params.fecha_fin = fechaFinal;    // Para los nuevos endpoints
+    }
     
     return params;
 }
 
 async function cargarReportes() {
     const params = obtenerParamsFecha();
-    const reportesData = await obtenerDatos(ENDPOINTS.reportes, params) || {};
 
-    ventasGlobal = reportesData.ventas || [];
-    productosGlobal = reportesData.productos || [];
-    detalleVentasGlobal = reportesData.detalleVentas || [];
+    // Obtener datos de los nuevos endpoints enviando fecha_inicio y fecha_fin
+    const paramsNuevosEndpoints = {};
+    if (params.fecha_inicio) paramsNuevosEndpoints.fecha_inicio = params.fecha_inicio;
+    if (params.fecha_fin) paramsNuevosEndpoints.fecha_fin = params.fecha_fin;
 
-    const ventasPorProducto = agruparVentasPorProducto(detalleVentasGlobal);
-    const ventasPorLinea = agruparVentasPorLinea(detalleVentasGlobal);
-    const ventasPorCliente = agruparVentasPorCliente(ventasGlobal);
-    const productoMasVendido = ventasPorProducto[0] || null;
+    const dataVentasCliente = await obtenerDatos("/api/reportes/ventas-por-cliente", paramsNuevosEndpoints) || [];
+    const dataCantidadVendida = await obtenerDatos("/api/reportes/cantidad-vendida", paramsNuevosEndpoints) || [];
+    const dataTopPorCategoria = await obtenerDatos("/api/reportes/top-por-categoria", paramsNuevosEndpoints) || [];
+    const dataTopProductos = await obtenerDatos("/api/reportes/top-productos", paramsNuevosEndpoints) || [];
+    const dataVentasCategoria = await obtenerDatos("/api/reportes/ventas-por-categoria", paramsNuevosEndpoints) || [];
+    const dataKpis = await obtenerDatos("/api/reportes/kpis", paramsNuevosEndpoints) || null;
+
+    // Ya no consultaremos ENDPOINTS.reportes debido a cambios en el backend, 
+    // las variables globales para detalle quedarán disponibles pero vacías por defecto:
+    ventasGlobal = [];
+    productosGlobal = [];
+    detalleVentasGlobal = [];
+
+    // Desglosamos productos desde ventasCategoria para enriquecer los reportes
+    const productosEnCategorias = [];
+    dataVentasCategoria.forEach(cat => {
+        if (cat.productos) {
+            cat.productos.forEach(p => {
+                productosEnCategorias.push({
+                    producto: p.descripcion,
+                    categoria: cat.categoria,
+                    total: parseFloat(p.utilidad || 0),
+                    cantidad: p.cantidad_vendida
+                });
+            });
+        }
+    });
+
+    const ventasPorProducto = dataCantidadVendida.map(item => {
+        const prodLocal = productosEnCategorias.find(p => String(p.producto).toLowerCase() === String(item.descripcion).toLowerCase()) || {};
+        return {
+            producto: item.descripcion,
+            cantidad: item.cantidad_vendida,
+            categoria: prodLocal.categoria || "Sin categoría",
+            total: prodLocal.total || 0
+        };
+    });
+    
+    const ventasPorCliente = dataVentasCliente.map(item => {
+        return {
+            cliente: item.cliente,
+            total: parseFloat(item.utilidad_total || 0),
+            ventas: 1 // Referencia genérica ya que el endpoint no retorna el contador de ventas
+        };
+    });
+
+    const vendidosPorCategoria = dataTopPorCategoria.map(item => ({
+        categoria: item.categoria,
+        producto: item.descripcion,
+        cantidad: item.cantidad_vendida,
+        total: parseFloat(item.utilidad || 0)
+    }));
+
+    const topProductos = dataTopProductos.map(item => ({
+        producto: item.descripcion,
+        categoria: item.categoria,
+        cantidad: item.cantidad_vendida,
+        total: parseFloat(item.utilidad || 0)
+    }));
+
+    const ventasPorLinea = dataVentasCategoria.map(item => ({
+        categoria: item.categoria,
+        total: parseFloat(item.utilidad_total || 0),
+        cantidad: (item.productos || []).reduce((acc, p) => acc + Number(p.cantidad_vendida), 0)
+    }));
+
+    // Local fallback entities
+    const productoMasVendido = topProductos[0] || null;
     const lineaMasVendida = ventasPorLinea[0] || null;
     const clientePrincipal = ventasPorCliente[0] || null;
-    const vendidosPorCategoria = obtenerMasVendidosPorCategoria(detalleVentasGlobal);
 
-    actualizarCards({
-        ventas: ventasGlobal,
-        productoMasVendido,
-        lineaMasVendida,
-        clientePrincipal
-    });
+    if (dataKpis) {
+        setText("cardTotalVentas", formatoMoneda(dataKpis.total_ventas || 0));
+        setText("cardProductoMasVendido", dataKpis.producto_mas_vendido || "Sin datos");
+        setText("cardClientePrincipal", dataKpis.cliente_principal || "Sin datos");
+        setText("cardLineaMasVendida", dataKpis.categoria_top || "Sin datos");
+    } else {
+        actualizarCards({
+            ventas: ventasGlobal,
+            productoMasVendido,
+            lineaMasVendida,
+            clientePrincipal
+        });
+    }
 
     renderChartVentasProducto(ventasPorProducto);
     renderChartVentasLinea(ventasPorLinea);
     renderChartVentasCliente(ventasPorCliente);
-    renderProductoMasVendido(productoMasVendido, ventasPorProducto);
+    renderProductoMasVendido(productoMasVendido, topProductos);
     renderVendidosPorCategoria(vendidosPorCategoria);
 
     prepararDatosExcel({
         ventasGlobal,
         detalleVentasGlobal,
-        ventasPorProducto,
+        ventasPorProducto, // Para Excel
         ventasPorLinea,
-        ventasPorCliente,
+        ventasPorCliente,  // Para Excel
         vendidosPorCategoria
     });
 }

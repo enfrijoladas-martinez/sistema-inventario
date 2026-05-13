@@ -318,19 +318,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function cargarAlmacenes(almacenSeleccionado = "") {
     if (!selectAlmacenVenta) return;
 
-    selectAlmacenVenta.innerHTML = `<option value="">Elegir almacén...</option>`;
-
-    almacenesCache.forEach((a) => {
-      const option = document.createElement("option");
-      option.value = a.id_almacen;
-      option.textContent = a.nombre || a.nombre_almacen || `Almacén ${a.id_almacen}`;
-
-      if (String(a.id_almacen) === String(almacenSeleccionado)) {
-        option.selected = true;
-      }
-
-      selectAlmacenVenta.appendChild(option);
-    });
+    selectAlmacenVenta.innerHTML = `<option value="">Primero elija un producto...</option>`;
+    selectAlmacenVenta.disabled = true;
   }
 
   function getOpcionesProductosHTML(idSeleccionado = "") {
@@ -1028,12 +1017,40 @@ document.addEventListener("DOMContentLoaded", () => {
             item.setAttribute("data-nombre", nombre);
             item.setAttribute("data-precio", p.precio || 0);
 
-            item.addEventListener("click", (e) => {
+            item.addEventListener("click", async (e) => {
               e.preventDefault();
               e.stopPropagation();
               selectProductoVenta.value = `${p.folio || ""} - ${nombre}`;
               inpPrecioVenta.value = money(p.precio || 0);
               dropdown.style.display = "none";
+              
+              // Load warehouses that have stock for this product
+              selectAlmacenVenta.innerHTML = `<option value="">Cargando almacenes...</option>`;
+              selectAlmacenVenta.disabled = true;
+              
+              try {
+                const resStock = await apiFetch(`/almacenes/por-producto/${p.id_producto}`);
+                const almacenesStock = resStock.data || [];
+                
+                selectAlmacenVenta.innerHTML = `<option value="">Elegir almacén...</option>`;
+                
+                if (almacenesStock.length === 0) {
+                  selectAlmacenVenta.innerHTML += `<option value="" disabled>Sin stock en ningún almacén</option>`;
+                } else {
+                  almacenesStock.forEach((a) => {
+                    const option = document.createElement("option");
+                    option.value = a.id_almacen;
+                    const stock = a.stock !== undefined ? a.stock : (a.cantidad || 0);
+                    option.textContent = `${a.nombre || a.nombre_almacen || 'Almacén ' + a.id_almacen} (Stock: ${stock})`;
+                    selectAlmacenVenta.appendChild(option);
+                  });
+                }
+              } catch (error) {
+                console.error("Error al obtener stock por almacén:", error);
+                selectAlmacenVenta.innerHTML = `<option value="">Error al cargar almacenes</option>`;
+              } finally {
+                selectAlmacenVenta.disabled = false;
+              }
             });
 
             dropdown.appendChild(item);

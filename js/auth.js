@@ -2,7 +2,7 @@ const API_URL = "http://146.190.165.82";
 const KEY_TOKEN = "token";
 const KEY_USUARIO = "usuarioLogueado";
 
-const PAGINAS_EMPLEADO = ["productos.html", "clientes.html", "reportes.html", "index.html"];
+const PAGINAS_EMPLEADO = ["productos.html", "clientes.html", "reportes.html", "index.html", "inventario.html"];
 
 function verificarToken() {
     const token = localStorage.getItem(KEY_TOKEN);
