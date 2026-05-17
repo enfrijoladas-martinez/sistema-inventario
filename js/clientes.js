@@ -264,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
     categoriasTemporales = clienteOriginal.categorias_ids.slice();
     renderCategoriasTemporales();
     actualizarEncabezadoCategorias();
-    inpFolio.disabled = true;
+    
     tituloModal.textContent = `Editar Cliente ${c.folio}`;
     btnGuardar.textContent = "Guardar Cambios";
     $(modalRegistro).modal("show");
@@ -394,6 +394,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
     } else {
       cliente = {};
+      if (clienteOriginal && clienteOriginal.folio !== folio) cliente.folio = folio;
       if (clienteOriginal && clienteOriginal.nombre !== nombre) cliente.nombre = nombre;
       if (clienteOriginal && clienteOriginal.apellido_paterno !== apPat) cliente.apellido_paterno = apPat;
       if (clienteOriginal && clienteOriginal.apellido_materno !== (apMat || null)) cliente.apellido_materno = apMat || null;
@@ -402,7 +403,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (clienteOriginal && clienteOriginal.id_estado !== idEstado) cliente.id_estado = idEstado;
       if (clienteOriginal && clienteOriginal.id_municipio !== idMunicipio) cliente.id_municipio = idMunicipio;
       
-      cliente.categorias_ids = nuevasCategorias ?? [];
+      const catOriginalesStr = (clienteOriginal ? clienteOriginal.categorias_ids : []).slice().sort().join(",");
+      const catNuevasStr = nuevasCategorias.slice().sort().join(",");
+      if (catOriginalesStr !== catNuevasStr) {
+        cliente.categorias_ids = nuevasCategorias;
+      }
 
       if (Object.keys(cliente).length === 0) {
         await Swal.fire({

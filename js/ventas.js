@@ -379,14 +379,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const precioConIVA = calcularPrecioConIVA(precioBase);
       const importe = Number(item.cantidad_vendida) * precioConIVA;
 
-      if (modo === "edit") {
-        return `
+return `
           <tr data-index="${index}">
-            <td>
-              <select class="form-control form-control-sm detalle-producto">
-                ${getOpcionesProductosHTML(item.id_producto)}
-              </select>
-            </td>
+            <td>${item.nombre_producto}</td>
             <td>
               <select class="form-control form-control-sm detalle-almacen">
                 ${getOpcionesAlmacenesHTML(item.id_almacen)}
@@ -409,31 +404,6 @@ document.addEventListener("DOMContentLoaded", () => {
             </td>
             <td class="detalle-precio-iva">$${money(precioConIVA)}</td>
             <td class="detalle-importe">$${money(importe)}</td>
-            <td>
-              <button type="button" class="btn btn-danger btn-sm btn-quitar-detalle">
-                Quitar
-              </button>
-            </td>
-          </tr>
-        `;
-      }
-
-      const almacen = almacenesCache.find(
-        (a) => Number(a.id_almacen) === Number(item.id_almacen)
-      );
-      const nombreAlmacen = item.nombre_almacen ||
-        (almacen
-          ? (almacen.nombre || almacen.nombre_almacen || `Almacén ${almacen.id_almacen}`)
-          : "—");
-
-      return `
-        <tr data-index="${index}">
-          <td>${item.nombre_producto}</td>
-          <td>${nombreAlmacen}</td>
-          <td>${item.cantidad_vendida}</td>
-          <td>$${money(precioBase)}</td>
-          <td>$${money(precioConIVA)}</td>
-          <td>$${money(importe)}</td>
           <td>
             <button type="button" class="btn btn-danger btn-sm btn-quitar-detalle">
               Quitar
@@ -469,16 +439,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const item = detalleVentaTemporal[index];
     if (!item) return;
 
-    const selectProducto = tr.querySelector(".detalle-producto");
     const selectAlmacen = tr.querySelector(".detalle-almacen");
     const inputCantidad = tr.querySelector(".detalle-cantidad");
     const inputPrecio = tr.querySelector(".detalle-precio");
-
-    if (selectProducto) {
-      const option = selectProducto.options[selectProducto.selectedIndex];
-      item.id_producto = Number(selectProducto.value) || 0;
-      item.nombre_producto = option?.text || "";
-    }
 
     if (selectAlmacen) {
       item.id_almacen = Number(selectAlmacen.value) || null;
@@ -1178,27 +1141,6 @@ document.addEventListener("DOMContentLoaded", () => {
     tbodyDetalleVenta.addEventListener("change", (e) => {
       const tr = e.target.closest("tr");
       if (!tr) return;
-
-      if (e.target.classList.contains("detalle-producto")) {
-        const index = Number(tr.getAttribute("data-index"));
-        const item = detalleVentaTemporal[index];
-        if (!item) return;
-
-        const select = e.target;
-        const option = select.options[select.selectedIndex];
-        const nuevoIdProducto = Number(select.value);
-
-        item.id_producto = Number.isFinite(nuevoIdProducto) ? nuevoIdProducto : 0;
-        item.nombre_producto = option?.text || "";
-        item.precio_venta = Number(option?.getAttribute("data-precio") || 0);
-
-        const inputPrecio = tr.querySelector(".detalle-precio");
-        if (inputPrecio) {
-          inputPrecio.value = item.precio_venta;
-        }
-
-        actualizarDetalleDesdeFila(tr);
-      }
 
       if (e.target.classList.contains("detalle-almacen")) {
         const index = Number(tr.getAttribute("data-index"));

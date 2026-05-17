@@ -7,6 +7,7 @@ let categoriasTemporales = [];
 
 let modo = "create";
 let idProductoEditando = null;
+let productoOriginal = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     cargarProductos();
@@ -227,7 +228,6 @@ function renderizarProductos(lista) {
                 <td>${producto.clave || producto.folio || ""}</td>
                 <td>${producto.descripcion || ""}</td>
                 <td>${formatoMoneda(producto.costo || 0)}</td>
-                <td>${formatoMoneda(producto.precio || 0)}</td>
                 <td>${obtenerCategoriasTexto(producto)}</td>
                 <td>
                       <div class="d-flex justify-content-center align-items-center flex-nowrap">
@@ -272,18 +272,41 @@ async function guardarProducto() {
     const folio = document.getElementById("codigoProd")?.value.trim();
     const descripcion = document.getElementById("descripcionProd")?.value.trim();
     const costo = Number(document.getElementById("costoProd")?.value || 0);
-    const precio = Number(document.getElementById("precioProd")?.value || 0);
 
     const payload = {
         descripcion,
         costo,
-        precio,
         categorias_ids: categoriasTemporales.map((cat) => Number(cat.id_cat)),
         subcategorias_ids: subcategoriasTemporales.map((sub) => Number(sub.id_subcat))
     };
 
     if (modo === "create") {
         payload.folio = folio;
+    } else if (modo === "edit" && productoOriginal) {
+        // En modo edición, quitar campos que no han cambiado
+        if (productoOriginal.descripcion === payload.descripcion) delete payload.descripcion;
+        if (Number(productoOriginal.costo) === payload.costo) delete payload.costo;
+        
+        const catOriginalesStr = (productoOriginal.categorias || []).map(cat => cat.id_cat || cat.id_categoria || cat.id).sort().join(",");
+        const catNuevasStr = payload.categorias_ids.slice().sort().join(",");
+        if (catOriginalesStr === catNuevasStr) {
+            delete payload.categorias_ids;
+        }
+        
+        // Asume que la api espera clave en su lugar si la base la tiene como folio o clave (usualmente es folio o clave dependiendo)
+        const claveOriginal = productoOriginal.clave || productoOriginal.folio;
+        if (folio && claveOriginal !== folio) {
+            payload.folio = folio; // Permitir edición y enviarlo si cambia
+        }
+
+        if (payload.subcategorias_ids && payload.subcategorias_ids.length === 0) {
+            delete payload.subcategorias_ids; // Si está vacío y no manejamos bien subcategorías, evitar que lo rompan
+        }
+        
+        if (Object.keys(payload).length === 0) {
+            Swal.fire({ icon: "warning", title: "Sin cambios", text: "No se hicieron modificaciones." });
+            return;
+        }
     }
 
     try {
@@ -326,11 +349,11 @@ async function abrirEditarProducto(idProducto) {
 
         modo = "edit";
         idProductoEditando = idProducto;
+        productoOriginal = producto;
 
         setValue("codigoProd", producto.clave || producto.folio || "");
         setValue("descripcionProd", producto.descripcion || "");
         setValue("costoProd", producto.costo || "");
-        setValue("precioProd", producto.precio || "");
 
         const inputCodigo = document.getElementById("codigoProd");
         if (inputCodigo) inputCodigo.disabled = true;
@@ -380,7 +403,6 @@ async function verDetalleProducto(idProducto) {
         setText("detalleCodigo", producto.clave || producto.folio || "");
         setText("detalleDescripcion", producto.descripcion || "");
         setText("detalleCosto", formatoMoneda(producto.costo || 0));
-        setText("detallePrecio", formatoMoneda(producto.precio || 0));
         setText("detalleCategorias", obtenerCategoriasTexto(producto));
         $("#modalDetalleProducto").modal("show");
 
@@ -704,7 +726,6 @@ function limpiarFormularioProducto() {
     setValue("codigoProd", "");
     setValue("descripcionProd", "");
     setValue("costoProd", "");
-    setValue("precioProd", "");
 
     categoriasTemporales = [];
     actualizarResumenCategorias();    renderizarCategoriasTemporales();
