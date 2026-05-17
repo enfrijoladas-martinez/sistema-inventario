@@ -12,6 +12,19 @@ let productoOriginal = null;
 document.addEventListener("DOMContentLoaded", () => {
     cargarProductos();
     cargarCategorias();
+
+    const usuario = JSON.parse(localStorage.getItem("usuarioLogueado") || "{}");
+    const esEmpleado = (usuario.rol || "").toLowerCase() === "empleado";
+
+    if (esEmpleado) {
+        const btnNuevo = document.getElementById("btnNuevoProducto");
+        const btnCargaMasiva = document.getElementById("btnCargaMasiva");
+        const btnDescargarPlantilla = document.getElementById("btnDescargarPlantilla");
+        if (btnNuevo) btnNuevo.style.display = "none";
+        if (btnCargaMasiva) btnCargaMasiva.style.display = "none";
+        if (btnDescargarPlantilla) btnDescargarPlantilla.style.display = "none";
+    }
+
     const btnGuardarProducto = document.getElementById("btnGuardarProducto");
     const buscarProductos = document.getElementById("buscarProductos");
     const btnAbrirCategoriasProducto = document.getElementById("btnAbrirCategoriasProducto");
@@ -116,6 +129,10 @@ async function fetchBackend(endpoint, options = {}) {
         ...(options.headers || {})
     };
 
+    if (options.auth === false) {
+      delete headers["Authorization"];
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers
@@ -147,7 +164,7 @@ async function fetchBackend(endpoint, options = {}) {
 
 async function cargarProductos() {
     try {
-        const result = await fetchBackend("/api/productos/");
+        const result = await fetchBackend("/api/productos/", { auth: false });
         productos = result.data || [];
         renderizarProductos(productos);
     } catch (error) {
@@ -158,7 +175,7 @@ async function cargarProductos() {
 
 async function cargarCategorias() {
     try {
-        const result = await fetchBackend("/api/categorias/");
+        const result = await fetchBackend("/api/categorias/", { auth: false });
         categoriasDisponibles = result.data || [];
 
         llenarSelectCategorias("selectCategoriaProducto");
@@ -186,7 +203,7 @@ function llenarSelectCategorias(idSelect) {
 
 async function cargarSubcategorias() {
     try {
-        const result = await fetchBackend("/api/subcategorias/");
+        const result = await fetchBackend("/api/subcategorias/", { auth: false });
         subcategoriasDisponibles = result.data || [];
 
         const select = document.getElementById("selectNuevaSubcategoria");
@@ -222,6 +239,9 @@ function renderizarProductos(lista) {
         return;
     }
 
+    const usuario = JSON.parse(localStorage.getItem("usuarioLogueado") || "{}");
+    const esEmpleado = (usuario.rol || "").toLowerCase() === "empleado";
+
     lista.forEach((producto) => {
         tbody.innerHTML += `
             <tr>
@@ -234,16 +254,19 @@ function renderizarProductos(lista) {
                         <button class="btn btn-info btn-sm btn-circle mx-1" onclick="verDetalleProducto(${producto.id_producto})">
                           <i class="fas fa-eye"></i>
                         </button>
-
-                        <button class="btn btn-warning btn-sm btn-circle mx-1" onclick="abrirEditarProducto(${producto.id_producto})">
-                          <i class="fas fa-edit"></i>
-                        </button>
-
-                        <button class="btn btn-danger btn-sm btn-circle mx-1" onclick="eliminarProducto(${producto.id_producto})">
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </div>
-                  </td>
+  
+                          ${!esEmpleado ? `
+                          <button class="btn btn-warning btn-sm btn-circle mx-1" onclick="abrirEditarProducto(${producto.id_producto})">
+                            <i class="fas fa-edit"></i>
+                          </button>
+  
+                          <button class="btn btn-danger btn-sm btn-circle mx-1" onclick="eliminarProducto(${producto.id_producto})">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                          ` : ''}
+                        </div>
+                    </td>
+            </tr>
         `;
     });
 }
@@ -344,7 +367,7 @@ async function guardarProducto() {
 
 async function abrirEditarProducto(idProducto) {
     try {
-        const result = await fetchBackend(`/api/productos/${idProducto}`);
+        const result = await fetchBackend(`/api/productos/${idProducto}`, { auth: false });
         const producto = result.data;
 
         modo = "edit";
@@ -354,9 +377,6 @@ async function abrirEditarProducto(idProducto) {
         setValue("codigoProd", producto.clave || producto.folio || "");
         setValue("descripcionProd", producto.descripcion || "");
         setValue("costoProd", producto.costo || "");
-
-        const inputCodigo = document.getElementById("codigoProd");
-        if (inputCodigo) inputCodigo.disabled = true;
 
         categoriasTemporales = (producto.categorias || []).map((cat) => ({
             id_cat: cat.id_cat || cat.id_categoria || cat.id,
@@ -397,7 +417,7 @@ async function eliminarProducto(idProducto) {
 
 async function verDetalleProducto(idProducto) {
     try {
-        const result = await fetchBackend(`/api/productos/${idProducto}`);
+        const result = await fetchBackend(`/api/productos/${idProducto}`, { auth: false });
         const producto = result.data;
 
         setText("detalleCodigo", producto.clave || producto.folio || "");

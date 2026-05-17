@@ -26,6 +26,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const IVA = 0.16;
 
+  const usuario = JSON.parse(localStorage.getItem("usuarioLogueado") || "{}");
+  const esEmpleado = (usuario.rol || "").toLowerCase() === "empleado";
+
   let modo = "create";
   let idVentaEditando = null;
   let detalleVentaTemporal = [];
@@ -120,6 +123,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const url = `${API_BASE}${endpoint}`;
     console.log("Request URL:", url);
+    if (options.auth === false) {
+      delete headers["Authorization"];
+    }
+
     const response = await fetch(url, {
       headers,
       ...options
@@ -153,12 +160,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function getVentasAPI() {
-    const res = await apiFetch("/ventas/");
+    const res = await apiFetch("/ventas/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getVentaAPI(idVenta) {
-    const res = await apiFetch(`/ventas/${idVenta}`);
+    const res = await apiFetch(`/ventas/${idVenta}`, { auth: false });
     return res.data || null;
   }
 
@@ -166,56 +173,59 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Payload enviado:", JSON.stringify(payload, null, 2));
     return await apiFetch("/ventas/", {
       method: "POST",
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      auth: false
     });
   }
 
   async function actualizarVentaAPI(idVenta, payload) {
     return await apiFetch(`/ventas/${idVenta}`, {
       method: "PUT",
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      auth: false
     });
   }
 
   async function eliminarVentaAPI(idVenta) {
     return await apiFetch(`/ventas/${idVenta}`, {
-      method: "DELETE"
+      method: "DELETE",
+      auth: false
     });
   }
 
   async function getProductosAPI() {
-    const res = await apiFetch("/productos/");
+    const res = await apiFetch("/productos/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getProductoAPI(folio) {
-    const res = await apiFetch(`/productos/${folio}`);
+    const res = await apiFetch(`/productos/${folio}`, { auth: false });
     return res.data || null;
   }
 
   async function getAlmacenesAPI() {
-    const res = await apiFetch("/almacenes/");
+    const res = await apiFetch("/almacenes/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getInventariosAPI() {
-    const res = await apiFetch("/inventarios/");
+    const res = await apiFetch("/inventarios/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getInventarioDetalleAPI(idInventario) {
-    const res = await apiFetch(`/inventarios/${idInventario}`);
+    const res = await apiFetch(`/inventarios/${idInventario}`, { auth: false });
     return res.data || null;
   }
 
   async function getEstadosAPI() {
-    const res = await apiFetch("/estados_municipios/");
+    const res = await apiFetch("/estados_municipios/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getMunicipiosPorEstadoAPI(idEstado) {
     if (!idEstado) return [];
-    const res = await apiFetch(`/estados_municipios/${idEstado}`);
+    const res = await apiFetch(`/estados_municipios/${idEstado}`, { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
@@ -947,7 +957,7 @@ return `
           let productos = productosCache.length > 0 ? productosCache : [];
           
           if (productos.length === 0) {
-            const res = await apiFetch("/productos/");
+            const res = await apiFetch("/productos/", { auth: false });
             productos = Array.isArray(res.data) ? res.data : [];
           }
 
@@ -992,7 +1002,7 @@ return `
               selectAlmacenVenta.disabled = true;
               
               try {
-                const resStock = await apiFetch(`/almacenes/por-producto/${p.id_producto}`);
+                const resStock = await apiFetch(`/almacenes/por-producto/${p.id_producto}`, { auth: false });
                 const almacenesStock = resStock.data || [];
                 
                 selectAlmacenVenta.innerHTML = `<option value="">Elegir almacén...</option>`;

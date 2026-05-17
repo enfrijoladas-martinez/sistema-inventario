@@ -38,15 +38,10 @@ async function obtenerDatos(endpoint, params = {}) {
     try {
         const queryString = new URLSearchParams(params).toString();
         const url = queryString ? `${API_URL}${endpoint}?${queryString}` : `${API_URL}${endpoint}`;
-        const token = localStorage.getItem(KEY_TOKEN);
         
         const headers = {
             "Content-Type": "application/json"
         };
-        
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-        }
         
         const response = await fetch(url, { headers });
         const result = await response.json();

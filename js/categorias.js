@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let modo = "create";
   let idEditando = null;
   let categoriasCache = [];
+  const usuario = JSON.parse(localStorage.getItem("usuarioLogueado") || "{}");
+  const esEmpleado = (usuario.rol || "").toLowerCase() === "empleado";
 
   const norm = (v) => (v ?? "").toString().trim();
 
@@ -22,6 +24,10 @@ document.addEventListener("DOMContentLoaded", () => {
       ...(token ? { "Authorization": `Bearer ${token}` } : {}),
       ...(options.headers || {})
     };
+
+    if (options.auth === false) {
+      delete headers["Authorization"];
+    }
 
     const response = await fetch(`${API_BASE}${endpoint}`, {
       headers,
@@ -49,8 +55,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return data;
   }
 
+  if (esEmpleado) {
+    const btnNueva = document.querySelector('[data-target="#modalNuevaCategoria"]');
+    if (btnNueva) btnNueva.style.display = "none";
+  }
+
   async function getCategoriasAPI() {
-    const res = await apiFetch("/api/categorias/");
+    const res = await apiFetch("/api/categorias/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
@@ -115,11 +126,23 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${c.id_cat || c.id_categoria}</td>
         <td>${c.nombre}</td>
         <td>
+          <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle"><i class="fas fa-eye"></i></button>
+          ${!esEmpleado ? `
           <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar" title="Editar"><i class="fas fa-pen"></i></button>
           <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar"><i class="fas fa-trash"></i></button>
+          ` : ""}
         </td>
       </tr>
     `).join("");
+  }
+
+  function abrirDetalle(categoria) {
+    return Swal.fire({
+      icon: "info",
+      title: "Detalle de categoria",
+      html: `<p class="mb-1"><strong>ID:</strong> ${categoria.id_cat || categoria.id_categoria || ""}</p><p class="mb-0"><strong>Nombre:</strong> ${categoria.nombre || ""}</p>`,
+      confirmButtonText: "Cerrar"
+    });
   }
 
   function resetFormulario() {
@@ -177,6 +200,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const id = Number(tr.getAttribute("data-id"));
       const categoria = categoriasCache.find((c) => Number(c.id_cat || c.id_categoria) === id);
       if (!categoria) return;
+
+      if (e.target.closest(".btn-detalle")) {
+        await abrirDetalle(categoria);
+        return;
+      }
 
       if (e.target.closest(".btn-editar")) {
         abrirEditar(categoria);

@@ -14,6 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const tituloModal = document.getElementById("tituloModal");
   const modalRegistro = "#modalNuevoMovimiento";
 
+  const usuario = JSON.parse(localStorage.getItem("usuarioLogueado") || "{}");
+  const esEmpleado = (usuario.rol || "").toLowerCase() === "empleado";
+
   let modo = "create";
   let idEditando = null;
 
@@ -123,6 +126,10 @@ document.addEventListener("DOMContentLoaded", () => {
       ...(options.headers || {})
     };
 
+    if (options.auth === false) {
+      delete headers["Authorization"];
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
       headers,
       ...options
@@ -149,8 +156,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return data;
   }
 
+  if (esEmpleado) {
+    const btnNuevo = document.querySelector('[data-target="#modalNuevoMovimiento"]');
+    if (btnNuevo) btnNuevo.style.display = "none";
+  }
+
   async function getMovimientosAPI() {
-    const res = await apiFetch("/api/movimientos/");
+    const res = await apiFetch("/api/movimientos/", { auth: false });
     const data = Array.isArray(res.data) ? res.data : [];
     return data.map(m => ({
       ...m,
@@ -159,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function getMovimientoDetalleAPI(idMovimiento) {
-    const res = await apiFetch(`/api/movimientos/${idMovimiento}`);
+    const res = await apiFetch(`/api/movimientos/${idMovimiento}`, { auth: false });
     return res.data || null;
   }
 
@@ -184,22 +196,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function getInventariosAPI() {
-    const res = await apiFetch("/api/inventarios/");
+    const res = await apiFetch("/api/inventarios/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getInventarioDetalleAPI(idInventario) {
-    const res = await apiFetch(`/api/inventarios/${idInventario}`);
+    const res = await apiFetch(`/api/inventarios/${idInventario}`, { auth: false });
     return res.data || null;
   }
 
   async function getProductosAPI() {
-    const res = await apiFetch("/api/productos/");
+    const res = await apiFetch("/api/productos/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getAlmacenesAPI() {
-    const res = await apiFetch("/api/almacenes/");
+    const res = await apiFetch("/api/almacenes/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
@@ -450,12 +462,14 @@ document.addEventListener("DOMContentLoaded", () => {
           <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle">
             <i class="fas fa-eye"></i>
           </button>
+          ${!esEmpleado ? `
           <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar" title="Editar">
             <i class="fas fa-pen"></i>
           </button>
           <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar">
             <i class="fas fa-trash"></i>
           </button>
+          ` : ""}
         </td>
       </tr>
     `).join("");

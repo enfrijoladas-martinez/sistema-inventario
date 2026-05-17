@@ -14,6 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const tituloModal = document.getElementById("tituloModal");
   const modalRegistro = "#modalNuevoInventario";
 
+  const usuario = JSON.parse(localStorage.getItem("usuarioLogueado") || "{}");
+  const esEmpleado = (usuario.rol || "").toLowerCase() === "empleado";
+
   let inventariosCache = [];
   let productosCache = [];
   let almacenesCache = [];
@@ -74,6 +77,10 @@ document.addEventListener("DOMContentLoaded", () => {
       ...(options.headers || {})
     };
 
+    if (options.auth === false) {
+      delete headers["Authorization"];
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
       headers,
       ...options
@@ -96,13 +103,18 @@ document.addEventListener("DOMContentLoaded", () => {
     return data;
   }
 
+  if (esEmpleado) {
+    const btnNuevo = document.querySelector('[data-target="#modalNuevoInventario"]');
+    if (btnNuevo) btnNuevo.style.display = "none";
+  }
+
   async function getInventariosAPI() {
-    const res = await apiFetch("/api/inventarios/");
+    const res = await apiFetch("/api/inventarios/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getInventarioDetalleAPI(idInventario) {
-    const res = await apiFetch(`/api/inventarios/${idInventario}`);
+    const res = await apiFetch(`/api/inventarios/${idInventario}`, { auth: false });
     return res.data || null;
   }
 
@@ -120,12 +132,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function getProductosAPI() {
-    const res = await apiFetch("/api/productos/");
+    const res = await apiFetch("/api/productos/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getAlmacenesAPI() {
-    const res = await apiFetch("/api/almacenes/");
+    const res = await apiFetch("/api/almacenes/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
@@ -198,9 +210,11 @@ document.addEventListener("DOMContentLoaded", () => {
           <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle">
             <i class="fas fa-eye"></i>
           </button>
+          ${!esEmpleado ? `
           <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar">
             <i class="fas fa-trash"></i>
           </button>
+          ` : ""}
         </td>
       </tr>
     `).join("");

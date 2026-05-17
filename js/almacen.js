@@ -25,6 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalCategorias = document.getElementById("modalCategoriasAlmacen");
   const tituloModal = document.getElementById("tituloModal");
 
+  const usuario = JSON.parse(localStorage.getItem("usuarioLogueado") || "{}");
+  const esEmpleado = (usuario.rol || "").toLowerCase() === "empleado";
+
   let modo = "create";
   let idEditando = null;
   let categoriasTemporales = [];
@@ -41,6 +44,10 @@ document.addEventListener("DOMContentLoaded", () => {
       ...(options.headers || {})
     };
     
+    if (options.auth === false) {
+      delete headers["Authorization"];
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
       headers,
       ...options
@@ -67,13 +74,18 @@ document.addEventListener("DOMContentLoaded", () => {
     return data;
   }
 
+  if (esEmpleado) {
+    const btnNuevo = document.querySelector('[data-target="#modalNuevoAlmacen"]');
+    if (btnNuevo) btnNuevo.style.display = "none";
+  }
+
   async function getAlmacenesAPI() {
-    const res = await apiFetch("/api/almacenes/");
+    const res = await apiFetch("/api/almacenes/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getAlmacenDetalleAPI(idAlmacen) {
-    const res = await apiFetch(`/api/almacenes/${idAlmacen}`);
+    const res = await apiFetch(`/api/almacenes/${idAlmacen}`, { auth: false });
     return res.data || null;
   }
 
@@ -98,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function getCategoriasAPI() {
-    const res = await apiFetch("/api/categorias/");
+    const res = await apiFetch("/api/categorias/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
@@ -193,12 +205,14 @@ document.addEventListener("DOMContentLoaded", () => {
           <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle">
             <i class="fas fa-eye"></i>
           </button>
+          ${!esEmpleado ? `
           <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar" title="Editar">
             <i class="fas fa-pen"></i>
           </button>
           <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar">
             <i class="fas fa-trash"></i>
           </button>
+          ` : ""}
         </td>
       </tr>
     `).join("");

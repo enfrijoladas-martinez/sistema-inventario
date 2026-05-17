@@ -45,6 +45,10 @@ document.addEventListener("DOMContentLoaded", () => {
       ...(options.headers || {})
     };
 
+    if (options.auth === false) {
+      delete headers["Authorization"];
+    }
+
     const response = await fetch(`${API_URL}${endpoint}`, {
       headers,
       ...options
@@ -70,13 +74,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function getEstadosAPI() {
-    const res = await apiFetch("/api/estados_municipios/");
+    const res = await apiFetch("/api/estados_municipios/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
   async function getMunicipiosPorEstadoAPI(idEstado) {
     if (!idEstado) return [];
-    const res = await apiFetch(`/api/estados_municipios/${idEstado}`);
+    const res = await apiFetch(`/api/estados_municipios/${idEstado}`, { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
@@ -116,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function cargarCategorias() {
     try {
-      const res = await apiFetch("/api/categorias/");
+      const res = await apiFetch("/api/categorias/", { auth: false });
       categoriasGlobal = Array.isArray(res.data) ? res.data : [];
       selectNuevaCategoria.innerHTML = `<option value="">Elegir categoria...</option>`;
       categoriasGlobal.forEach((c) => {
@@ -133,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function cargarClientes() {
     try {
-      const res = await apiFetch("/api/clientes/");
+      const res = await apiFetch("/api/clientes/", { auth: false });
       console.log("Respuesta API clientes:", res);
       clientesGlobal = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
       renderTabla();
@@ -151,6 +155,10 @@ document.addEventListener("DOMContentLoaded", () => {
           const texto = `${c.folio} ${c.nombre} ${c.apellido_paterno} ${c.apellido_materno || ""} ${c.telefono} ${c.email}`.toLowerCase();
           return texto.includes(f);
         });
+
+    const usuario = JSON.parse(localStorage.getItem("usuarioLogueado") || "{}");
+    const esEmpleado = (usuario.rol || "").toLowerCase() === "empleado";
+
     console.log("Lista a renderizar:", lista);
     let tablaBody = document.querySelector("#dataTable tbody");
     if (!tablaBody) {
@@ -172,9 +180,11 @@ document.addEventListener("DOMContentLoaded", () => {
           <button type="button" class="btn btn-warning btn-circle btn-sm btn-editar" title="Editar">
             <i class="fas fa-pen"></i>
           </button>
+          ${!esEmpleado ? `
           <button type="button" class="btn btn-danger btn-circle btn-sm btn-eliminar" title="Eliminar">
             <i class="fas fa-trash"></i>
           </button>
+          ` : ''}
         </td>
       </tr>
     `).join("");
@@ -217,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function obtenerDetalleCliente(id) {
     try {
-      const res = await apiFetch(`/api/clientes/${id}`);
+      const res = await apiFetch(`/api/clientes/${id}`, { auth: false });
       return res.data || res || null;
     } catch (error) {
       console.error("Error obteniendo detalle:", error);
@@ -424,7 +434,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (modo === "create") {
         await apiFetch("/api/clientes/", {
           method: "POST",
-          body: JSON.stringify(cliente)
+          body: JSON.stringify(cliente),
+          auth: false
         });
         Swal.fire({
           icon: "success",
@@ -437,7 +448,8 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         await apiFetch(`/api/clientes/${idEditando}`, {
           method: "PUT",
-          body: JSON.stringify(cliente)
+          body: JSON.stringify(cliente),
+          auth: false
         });
         Swal.fire({
           icon: "success",
