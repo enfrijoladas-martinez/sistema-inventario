@@ -428,23 +428,18 @@ function renderChartVentasLinea(data) {
     if (chartVentasLinea) chartVentasLinea.destroy();
 
     chartVentasLinea = new Chart(ctx, {
-        type: "doughnut",
+        type: "bar",
         data: {
             labels: data.map((item) => item.categoria),
             datasets: [{
                 label: "Total vendido",
                 data: data.map((item) => item.total),
-                backgroundColor: [
-                    "rgba(78, 115, 223, 0.8)",
-                    "rgba(28, 200, 138, 0.8)",
-                    "rgba(246, 194, 62, 0.8)",
-                    "rgba(231, 74, 59, 0.8)",
-                    "rgba(54, 185, 204, 0.8)",
-                    "rgba(133, 135, 150, 0.8)"
-                ]
+                backgroundColor: "rgba(246, 194, 62, 0.7)",
+                borderColor: "rgba(246, 194, 62, 1)",
+                borderWidth: 1
             }]
         },
-        options: opcionesGrafica("Ventas por Línea / Categoría", false)
+        options: opcionesGrafica("Ventas por Línea / Categoría", true)
     });
 }
 

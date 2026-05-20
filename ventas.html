@@ -224,6 +224,7 @@
                         <th>Folio</th>
                         <th>Fecha</th>
                         <th>Total</th>
+                        <th>Cliente</th>
                         <th>Estado</th>
                         <th>Municipio</th>
                         <th style="width: 140px;">Acciones</th>
@@ -300,6 +301,20 @@
     <div class="form-group">
         <label for="folioVenta">Folio</label>
         <input type="text" class="form-control" id="folioVenta" placeholder="Ej. V001">
+    </div>
+
+    <div class="form-group">
+        <label for="selectClienteVenta">Cliente</label>
+        <div class="input-group">
+            <select id="selectClienteVenta" class="form-control">
+                <option value="">Seleccionar cliente...</option>
+            </select>
+            <div class="input-group-append">
+                <button type="button" class="btn btn-success" id="btnNuevoClienteVenta" title="Nuevo Cliente">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="form-group">
@@ -401,6 +416,65 @@
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
             </div>
 
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNuevoClienteVenta" tabindex="-1" role="dialog" aria-labelledby="tituloModalClienteVenta" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="tituloModalClienteVenta">Nuevo Cliente</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formularioClienteVenta">
+                    <div class="form-group">
+                        <label for="codigoCliVenta">Folio</label>
+                        <input type="text" class="form-control" id="codigoCliVenta" placeholder="Ej. CLI-001">
+                    </div>
+                    <div class="form-group">
+                        <label for="nombreCliVenta">Nombre del Cliente</label>
+                        <input type="text" class="form-control" id="nombreCliVenta" placeholder="Ej. Juan">
+                    </div>
+                    <div class="form-group">
+                        <label for="apellidoPaternoVenta">Apellido Paterno</label>
+                        <input type="text" class="form-control" id="apellidoPaternoVenta" placeholder="Ej. García">
+                    </div>
+                    <div class="form-group">
+                        <label for="apellidoMaternoVenta">Apellido Materno</label>
+                        <input type="text" class="form-control" id="apellidoMaternoVenta" placeholder="Ej. López">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="estadoCliVenta">Estado</label>
+                            <select id="estadoCliVenta" class="form-control">
+                                <option value="">Elegir...</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="municipioCliVenta">Municipio</label>
+                            <select id="municipioCliVenta" class="form-control" disabled>
+                                <option value="">Elegir...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefonoCliVenta">Teléfono</label>
+                        <input type="text" maxlength="10" class="form-control" id="telefonoCliVenta" placeholder="Ej. 2291234567">
+                    </div>
+                    <div class="form-group">
+                        <label for="emailCliVenta">Email</label>
+                        <input type="email" class="form-control" id="emailCliVenta" placeholder="ejemplo@dominio.com">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnGuardarClienteVenta">Guardar Cliente</button>
+            </div>
         </div>
     </div>
 </div>

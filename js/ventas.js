@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectEstado = document.getElementById("selectEstadoVenta");
   const selectMunicipio = document.getElementById("selectMunicipioVenta");
 
+  const selectClienteVenta = document.getElementById("selectClienteVenta");
+
   const selectProductoVenta = document.getElementById("selectProductoVenta");
   const selectAlmacenVenta = document.getElementById("selectAlmacenVenta");
   const inpCantidadVenta = document.getElementById("cantidadVenta");
@@ -32,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let modo = "create";
   let idVentaEditando = null;
   let detalleVentaTemporal = [];
+  let productoSeleccionadoId = null;
 
   let ventasCache = [];
   let productosCache = [];
@@ -39,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let inventariosCache = [];
   let estadosCache = [];
   let municipiosCache = [];
+  let clientesCache = [];
 
   const norm = (v) => (v ?? "").toString().trim();
 
@@ -164,6 +168,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return Array.isArray(res.data) ? res.data : [];
   }
 
+  async function buscarVentasAPI(termino) {
+    const res = await apiFetch(`/ventas/buscar/${encodeURIComponent(termino)}`, { auth: false });
+    return Array.isArray(res.data) ? res.data : [];
+  }
+
   async function getVentaAPI(idVenta) {
     const res = await apiFetch(`/ventas/${idVenta}`, { auth: false });
     return res.data || null;
@@ -229,6 +238,31 @@ document.addEventListener("DOMContentLoaded", () => {
     return Array.isArray(res.data) ? res.data : [];
   }
 
+  async function getClientesAPI() {
+    const res = await apiFetch("/clientes/", { auth: false });
+    return Array.isArray(res.data) ? res.data : [];
+  }
+
+  async function crearClienteAPI(payload) {
+    return await apiFetch("/clientes/", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      auth: false
+    });
+  }
+
+  function resolverEstadoPorId(idEstado) {
+    if (!idEstado) return null;
+    const encontrado = estadosCache.find((e) => Number(e.id_estado) === Number(idEstado));
+    return encontrado ? encontrado.nombre : null;
+  }
+
+  function resolverMunicipioPorId(idMunicipio) {
+    if (!idMunicipio) return null;
+    const encontrado = municipiosCache.find((m) => Number(m.id_municipio) === Number(idMunicipio));
+    return encontrado ? encontrado.nombre : null;
+  }
+
   function normalizarVenta(v) {
     return {
       id_venta: Number(v.id_venta),
@@ -237,8 +271,9 @@ document.addEventListener("DOMContentLoaded", () => {
       precio_venta_final: Number(v.precio_venta_final || 0),
       id_estado: v.id_estado ? Number(v.id_estado) : null,
       id_municipio: v.id_municipio ? Number(v.id_municipio) : null,
-      estado: v.estado ?? v.nombre_estado ?? null,
-      municipio: v.municipio ?? v.nombre_municipio ?? null
+      estado: v.estado ?? v.nombre_estado ?? resolverEstadoPorId(v.id_estado) ?? null,
+      municipio: v.municipio ?? v.nombre_municipio ?? resolverMunicipioPorId(v.id_municipio) ?? null,
+      cliente: v.cliente ?? (`${v.nombre || ""} ${v.apellido_paterno || ""}`.trim() || null)
     };
   }
 
@@ -319,6 +354,62 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     selectMunicipio.disabled = false;
+  }
+
+  async function cargarClientes(clienteSeleccionado = "") {
+    if (!selectClienteVenta) return;
+    clientesCache = await getClientesAPI();
+    selectClienteVenta.innerHTML = `<option value="">Seleccionar cliente...</option>`;
+    clientesCache.forEach((c) => {
+      const option = document.createElement("option");
+      option.value = c.id_cliente;
+      option.textContent = `${c.folio || ""} - ${c.nombre || ""} ${c.apellido_paterno || ""}`;
+      if (String(c.id_cliente) === String(clienteSeleccionado)) {
+        option.selected = true;
+      }
+      selectClienteVenta.appendChild(option);
+    });
+  }
+
+  async function cargarEstadosClienteVenta() {
+    const sel = document.getElementById("estadoCliVenta");
+    if (!sel) return;
+    const estados = await getEstadosAPI();
+    sel.innerHTML = `<option value="">Elegir...</option>`;
+    estados.forEach((e) => {
+      const opt = document.createElement("option");
+      opt.value = e.id_estado;
+      opt.textContent = e.nombre;
+      sel.appendChild(opt);
+    });
+  }
+
+  async function cargarMunicipiosClienteVenta() {
+    const selEstado = document.getElementById("estadoCliVenta");
+    const selMunicipio = document.getElementById("municipioCliVenta");
+    if (!selEstado || !selMunicipio) return;
+    const idEstado = selEstado.value;
+    selMunicipio.innerHTML = `<option value="">Elegir...</option>`;
+    selMunicipio.disabled = true;
+    if (!idEstado) return;
+    const municipios = await getMunicipiosPorEstadoAPI(idEstado);
+    municipios.forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m.id_municipio;
+      opt.textContent = m.nombre;
+      selMunicipio.appendChild(opt);
+    });
+    selMunicipio.disabled = false;
+  }
+
+  function resetFormClienteVenta() {
+    const form = document.getElementById("formularioClienteVenta");
+    if (form) form.reset();
+    const selMun = document.getElementById("municipioCliVenta");
+    if (selMun) {
+      selMun.innerHTML = `<option value="">Elegir...</option>`;
+      selMun.disabled = true;
+    }
   }
 
   function cargarProductos() {
@@ -484,6 +575,7 @@ return `
             ${v.folio}
             ${formatearFecha(v.fecha_creacion)}
             ${v.precio_venta_final}
+            ${v.cliente || ""}
             ${v.estado || ""}
             ${v.municipio || ""}
           `.toLowerCase();
@@ -494,7 +586,7 @@ return `
     if (!lista.length) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="6" class="text-center text-muted">No hay ventas registradas.</td>
+          <td colspan="7" class="text-center text-muted">No hay ventas registradas.</td>
         </tr>
       `;
       return;
@@ -505,6 +597,7 @@ return `
         <td>${v.folio}</td>
         <td>${formatearFecha(v.fecha_creacion)}</td>
         <td>$${money(v.precio_venta_final)}</td>
+        <td>${v.cliente || ""}</td>
         <td>${v.estado || ""}</td>
         <td>${v.municipio || ""}</td>
         <td>
@@ -531,6 +624,7 @@ return `
     detalleVentaTemporal = [];
     modo = "create";
     idVentaEditando = null;
+    productoSeleccionadoId = null;
 
     if (form) form.reset();
 
@@ -544,6 +638,8 @@ return `
       selectMunicipio.innerHTML = `<option value="">Elegir municipio...</option>`;
       selectMunicipio.disabled = true;
     }
+
+    if (selectClienteVenta) selectClienteVenta.value = "";
 
     if (selectProductoVenta) {
       cargarProductos();
@@ -703,24 +799,13 @@ return `
   }
 
   async function refrescarCatalogos() {
-    const [productos, almacenes, inventariosBase] = await Promise.all([
+    const [productos, almacenes] = await Promise.all([
       getProductosAPI(),
-      getAlmacenesAPI(),
-      getInventariosAPI()
+      getAlmacenesAPI()
     ]);
 
     productosCache = productos;
     almacenesCache = almacenes;
-
-    const detallesInventario = await Promise.all(
-      inventariosBase.map((inv) =>
-        getInventarioDetalleAPI(inv.id_inventario).catch(() => null)
-      )
-    );
-
-    inventariosCache = inventariosBase.map((inv, index) =>
-      enriquecerInventario(inv, detallesInventario[index])
-    );
   }
 
   async function refrescarVentas() {
@@ -755,12 +840,14 @@ return `
 
     const idEstado = selectEstado?.value ? Number(selectEstado.value) : null;
     const idMunicipio = selectMunicipio?.value ? Number(selectMunicipio.value) : null;
+    const idCliente = selectClienteVenta?.value ? Number(selectClienteVenta.value) : null;
 
     return {
       folio,
       precio_venta_final: total,
       id_estado: idEstado,
       id_municipio: idMunicipio,
+      id_cliente: idCliente,
       detalle: construirPayloadDetalle()
     };
   }
@@ -942,6 +1029,7 @@ return `
     selectProductoVenta.addEventListener("input", async () => {
       const valor = selectProductoVenta.value.trim();
 
+      productoSeleccionadoId = null;
       clearTimeout(timeoutBusqueda);
 
       if (!valor || valor.length < 2) {
@@ -953,21 +1041,8 @@ return `
 
       timeoutBusqueda = setTimeout(async () => {
         try {
-          // Use cached products or fetch if not available
-          let productos = productosCache.length > 0 ? productosCache : [];
-          
-          if (productos.length === 0) {
-            const res = await apiFetch("/productos/", { auth: false });
-            productos = Array.isArray(res.data) ? res.data : [];
-          }
-
-          // Filter by search text
-          const valorLower = valor.toLowerCase();
-          productos = productos.filter(p => {
-            const nombre = (p.descripcion || p.nombre_producto || "").toLowerCase();
-            const folio = (p.folio || "").toLowerCase();
-            return nombre.includes(valorLower) || folio.includes(valorLower);
-          });
+          const res = await apiFetch(`/productos/${encodeURIComponent(valor)}`, { auth: false });
+          const productos = Array.isArray(res.data) ? res.data : [];
 
           const dropdown = crearDropdownResultados();
           dropdown.innerHTML = "";
@@ -993,6 +1068,7 @@ return `
             item.addEventListener("click", async (e) => {
               e.preventDefault();
               e.stopPropagation();
+              productoSeleccionadoId = Number(p.id_producto);
               selectProductoVenta.value = `${p.folio || ""} - ${nombre}`;
               inpPrecioVenta.value = money(p.precio || 0);
               dropdown.style.display = "none";
@@ -1046,6 +1122,8 @@ return `
   }
 
   function obtenerIdProductoSeleccionado() {
+    if (productoSeleccionadoId) return productoSeleccionadoId;
+
     const valor = selectProductoVenta?.value;
     if (!valor) return null;
 
@@ -1186,7 +1264,7 @@ return `
 
   $(modalRegistro).on("shown.bs.modal", async function () {
     try {
-      await refrescarCatalogos();
+      await Promise.all([refrescarCatalogos(), cargarClientes()]);
       cargarProductos();
       cargarAlmacenes();
 
@@ -1206,6 +1284,70 @@ return `
     tituloModal.textContent = "Registrar Venta";
     btnGuardar.textContent = "Guardar Venta";
   });
+
+  const btnNuevoCliente = document.getElementById("btnNuevoClienteVenta");
+  if (btnNuevoCliente) {
+    btnNuevoCliente.addEventListener("click", async () => {
+      resetFormClienteVenta();
+      await cargarEstadosClienteVenta();
+      $("#modalNuevoClienteVenta").modal("show");
+    });
+  }
+
+  const selEstadoCliVenta = document.getElementById("estadoCliVenta");
+  if (selEstadoCliVenta) {
+    selEstadoCliVenta.addEventListener("change", cargarMunicipiosClienteVenta);
+  }
+
+  const btnGuardarClienteVenta = document.getElementById("btnGuardarClienteVenta");
+  if (btnGuardarClienteVenta) {
+    btnGuardarClienteVenta.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      const folio = document.getElementById("codigoCliVenta")?.value.trim();
+      const nombre = document.getElementById("nombreCliVenta")?.value.trim();
+      const apPat = document.getElementById("apellidoPaternoVenta")?.value.trim();
+      const apMat = document.getElementById("apellidoMaternoVenta")?.value.trim();
+      const idEstado = document.getElementById("estadoCliVenta")?.value ? Number(document.getElementById("estadoCliVenta").value) : null;
+      const idMunicipio = document.getElementById("municipioCliVenta")?.value ? Number(document.getElementById("municipioCliVenta").value) : null;
+      const tel = (document.getElementById("telefonoCliVenta")?.value || "").replace(/\D/g, "");
+      const email = document.getElementById("emailCliVenta")?.value.trim();
+
+      if (!folio || !nombre || !apPat) {
+        await showWarning("Folio, Nombre y Apellido Paterno son obligatorios");
+        return;
+      }
+
+      const payload = {
+        folio, nombre,
+        apellido_paterno: apPat,
+        apellido_materno: apMat || null,
+        telefono: tel,
+        email,
+        id_estado: idEstado,
+        id_municipio: idMunicipio,
+        categorias_ids: []
+      };
+
+      btnGuardarClienteVenta.disabled = true;
+      btnGuardarClienteVenta.textContent = "Guardando...";
+
+      try {
+        const res = await crearClienteAPI(payload);
+        await showSuccess(res?.message || "Cliente creado correctamente");
+        await cargarClientes();
+        if (res?.data?.id_cliente) {
+          selectClienteVenta.value = res.data.id_cliente;
+        }
+        $("#modalNuevoClienteVenta").modal("hide");
+      } catch (error) {
+        await showError(error.message || "Error al crear el cliente");
+      } finally {
+        btnGuardarClienteVenta.disabled = false;
+        btnGuardarClienteVenta.textContent = "Guardar Cliente";
+      }
+    });
+  }
 
   if (btnGuardar) {
     btnGuardar.addEventListener("click", async (e) => {
@@ -1305,14 +1447,31 @@ return `
   }
 
   if (inputBuscar) {
+    let timeoutBusquedaVentas = null;
     inputBuscar.addEventListener("input", () => {
-      renderTabla(inputBuscar.value);
+      clearTimeout(timeoutBusquedaVentas);
+      const valor = inputBuscar.value.trim();
+
+      if (!valor) {
+        refrescarVentas().then(() => renderTabla(""));
+        return;
+      }
+
+      timeoutBusquedaVentas = setTimeout(async () => {
+        try {
+          const resultados = await buscarVentasAPI(valor);
+          ventasCache = resultados.map(normalizarVenta);
+          renderTabla("");
+        } catch (error) {
+          console.error("Error al buscar ventas:", error);
+        }
+      }, 400);
     });
   }
 
   (async function init() {
     try {
-      await Promise.all([refrescarCatalogos(), refrescarVentas()]);
+      await Promise.all([refrescarCatalogos(), refrescarVentas(), cargarClientes()]);
       cargarProductos();
       cargarAlmacenes();
       await cargarEstados();
