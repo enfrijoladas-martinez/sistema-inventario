@@ -138,7 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
   async function cargarClientes() {
     try {
       const res = await apiFetch("/api/clientes/", { auth: false });
-      console.log("Respuesta API clientes:", res);
       clientesGlobal = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
       renderTabla();
     } catch (error) {
@@ -147,7 +146,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderTabla(filtro = "") {
-    console.log("renderTabla called, clientesGlobal:", clientesGlobal);
     const f = (filtro || "").toLowerCase();
     const lista = !f
       ? clientesGlobal
@@ -159,7 +157,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const usuario = JSON.parse(localStorage.getItem("usuarioLogueado") || "{}");
     const esEmpleado = (usuario.rol || "").toLowerCase() === "empleado";
 
-    console.log("Lista a renderizar:", lista);
     let tablaBody = document.querySelector("#dataTable tbody");
     if (!tablaBody) {
       tablaBody = document.createElement("tbody");

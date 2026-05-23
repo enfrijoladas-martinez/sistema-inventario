@@ -417,9 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Event delegation for table actions
   document.addEventListener("click", async (e) => {
-      console.log("Click event fired", e.target);
       const tr = e.target.closest("tr");
-      console.log("tr found:", tr);
       if (!tr || !tr.closest("#dataTable")) return;
 
       const idInventario = Number(tr.getAttribute("data-id"));

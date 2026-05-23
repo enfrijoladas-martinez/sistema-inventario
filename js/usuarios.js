@@ -135,7 +135,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function crearUsuario(payload) {
-    console.log("Payload enviado:", payload);
     const token = localStorage.getItem("token");
     const response = await fetch(`${API_BASE}/api/usuarios/`, {
       method: "POST",
@@ -209,8 +208,6 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         result = await crearUsuario(payload);
       }
-
-      console.log("Respuesta crear usuario:", result);
 
       if (!result.success) {
         if (String(result.message).toLowerCase().includes('token')) {

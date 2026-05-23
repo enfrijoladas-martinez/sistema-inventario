@@ -131,7 +131,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const url = `${API_BASE}${endpoint}`;
-    console.log("Request URL:", url);
     if (options.auth === false) {
       delete headers["Authorization"];
     }
@@ -184,7 +183,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function crearVentaAPI(payload) {
-    console.log("Payload enviado:", JSON.stringify(payload, null, 2));
     return await apiFetch("/ventas/", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -1235,7 +1233,6 @@ return `
           });
 
           dropdown.style.display = "block";
-          console.log("Dropdown shown with", productos.length, "items");
         } catch (error) {
           console.error("Error al buscar productos:", error);
         }

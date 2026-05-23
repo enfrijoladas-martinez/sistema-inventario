@@ -39,7 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const result = await response.json();
-      console.log("Respuesta del backend:", result);
 
       if (result.success) {
         localStorage.setItem(KEY_USUARIO, JSON.stringify(result.data));

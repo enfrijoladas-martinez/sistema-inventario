@@ -401,11 +401,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!Number.isFinite(idProducto) || !Number.isFinite(idAlmacen)) {
-      console.log("inventarioDetalle", inventarioDetalle);
-      console.log("inventarioLista", inventarioLista);
-      console.log("productosCache", productosCache);
-      console.log("almacenesCache", almacenesCache);
-
       throw new Error(
         "No se pudieron resolver los ids del producto o almacén desde el inventario seleccionado."
       );
