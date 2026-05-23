@@ -21,6 +21,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectAlmacenVenta = document.getElementById("selectAlmacenVenta");
   const inpCantidadVenta = document.getElementById("cantidadVenta");
   const inpPrecioVenta = document.getElementById("precioVenta");
+  const inpTipoCambio = document.getElementById("tipoCambio");
+  const btnFetchTipoCambio = document.getElementById("btnFetchTipoCambio");
   const totalVenta = document.getElementById("totalVenta");
 
   const tituloModal = document.getElementById("tituloModal");
@@ -35,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let idVentaEditando = null;
   let detalleVentaTemporal = [];
   let productoSeleccionadoId = null;
+  let tipoCambio = null;
 
   let ventasCache = [];
   let productosCache = [];
@@ -654,7 +657,14 @@ return `
     }
 
     if (inpCantidadVenta) inpCantidadVenta.value = "";
-    if (inpPrecioVenta) inpPrecioVenta.value = "";
+    if (inpPrecioVenta) {
+      inpPrecioVenta.innerHTML = '<option value="">Seleccione un producto primero...</option>';
+      inpPrecioVenta.disabled = true;
+    }
+    if (inpTipoCambio) {
+      inpTipoCambio.value = "";
+      tipoCambio = null;
+    }
   }
 
   function resolverProductoPorCoincidencia({ idProducto, folioProducto, descripcionProducto }) {
@@ -811,6 +821,64 @@ return `
   async function refrescarVentas() {
     const ventas = await getVentasAPI();
     ventasCache = ventas.map(normalizarVenta);
+  }
+
+  async function fetchExchangeRate() {
+    try {
+      btnFetchTipoCambio.disabled = true;
+      btnFetchTipoCambio.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Obteniendo...';
+      const response = await fetch("https://mx.dolarapi.com/v1/cotizaciones/usd");
+      const data = await response.json();
+      if (data && data.venta) {
+        inpTipoCambio.value = data.venta;
+        tipoCambio = Number(data.venta);
+      }
+    } catch (error) {
+      console.error("Error fetching exchange rate:", error);
+      await showError("No se pudo obtener el tipo de cambio. Intente manualmente.");
+    } finally {
+      btnFetchTipoCambio.disabled = false;
+      btnFetchTipoCambio.innerHTML = '<i class="fas fa-sync-alt"></i> Obtener tipo de cambio';
+    }
+  }
+
+  function populatePrecioDropdown(producto) {
+    if (!inpPrecioVenta) return;
+    inpPrecioVenta.innerHTML = "";
+    inpPrecioVenta.disabled = false;
+
+    const moneda = (producto.moneda || "MXN").toUpperCase();
+    const costo = Number(producto.costo || 0);
+    const margenes = Array.isArray(producto.margenes) ? producto.margenes : [0];
+
+    margenes.forEach((margen) => {
+      let precioCalculado = costo * (1 + margen / 100);
+
+      if (moneda === "USD") {
+        const tasa = tipoCambio || Number(inpTipoCambio.value) || 0;
+        if (tasa > 0) {
+          const convertido = Number((precioCalculado * tasa).toFixed(2));
+          const opt = document.createElement("option");
+          opt.value = convertido;
+          opt.textContent = `$${money(convertido)} MXN (${margen}% margen, convertido de $${money(precioCalculado)} USD)`;
+          inpPrecioVenta.appendChild(opt);
+        }
+        const optUsd = document.createElement("option");
+        optUsd.value = Number(precioCalculado.toFixed(2));
+        optUsd.textContent = `$${money(precioCalculado)} USD (${margen}% margen)`;
+        inpPrecioVenta.appendChild(optUsd);
+      } else {
+        precioCalculado = Number(precioCalculado.toFixed(2));
+        const opt = document.createElement("option");
+        opt.value = precioCalculado;
+        opt.textContent = `$${money(precioCalculado)} MXN (${margen}% margen)`;
+        inpPrecioVenta.appendChild(opt);
+      }
+    });
+
+    if (inpPrecioVenta.options.length > 0) {
+      inpPrecioVenta.selectedIndex = 0;
+    }
   }
 
   function construirPayloadDetalle() {
@@ -1033,7 +1101,8 @@ return `
       clearTimeout(timeoutBusqueda);
 
       if (!valor || valor.length < 2) {
-        inpPrecioVenta.value = "";
+        inpPrecioVenta.innerHTML = '<option value="">Seleccione un producto primero...</option>';
+        inpPrecioVenta.disabled = true;
         const dropdown = document.getElementById("dropdownProductosVenta");
         if (dropdown) dropdown.style.display = "none";
         return;
@@ -1063,14 +1132,16 @@ return `
             item.setAttribute("data-id", p.id_producto);
             item.setAttribute("data-folio", p.folio || "");
             item.setAttribute("data-nombre", nombre);
-            item.setAttribute("data-precio", p.precio || 0);
+            item.setAttribute("data-costo", p.costo || 0);
+            item.setAttribute("data-margenes", JSON.stringify(p.margenes || [0]));
+            item.setAttribute("data-moneda", p.moneda || "MXN");
 
             item.addEventListener("click", async (e) => {
               e.preventDefault();
               e.stopPropagation();
               productoSeleccionadoId = Number(p.id_producto);
               selectProductoVenta.value = `${p.folio || ""} - ${nombre}`;
-              inpPrecioVenta.value = money(p.precio || 0);
+              populatePrecioDropdown(p);
               dropdown.style.display = "none";
               
               // Load warehouses that have stock for this product
@@ -1297,6 +1368,36 @@ return `
   const selEstadoCliVenta = document.getElementById("estadoCliVenta");
   if (selEstadoCliVenta) {
     selEstadoCliVenta.addEventListener("change", cargarMunicipiosClienteVenta);
+  }
+
+  if (btnFetchTipoCambio) {
+    btnFetchTipoCambio.addEventListener("click", fetchExchangeRate);
+  }
+
+  if (inpTipoCambio) {
+    inpTipoCambio.addEventListener("input", () => {
+      tipoCambio = Number(inpTipoCambio.value) || null;
+      if (productoSeleccionadoId) {
+        const dropdown = document.getElementById("dropdownProductosVenta");
+        if (dropdown) {
+          const items = dropdown.querySelectorAll(".dropdown-item");
+          for (const item of items) {
+            if (Number(item.getAttribute("data-id")) === productoSeleccionadoId) {
+              const p = {
+                id_producto: Number(item.getAttribute("data-id")),
+                folio: item.getAttribute("data-folio"),
+                costo: Number(item.getAttribute("data-costo")),
+                margenes: JSON.parse(item.getAttribute("data-margenes") || "[0]"),
+                moneda: item.getAttribute("data-moneda"),
+                descripcion: item.getAttribute("data-nombre")
+              };
+              populatePrecioDropdown(p);
+              break;
+            }
+          }
+        }
+      }
+    });
   }
 
   const btnGuardarClienteVenta = document.getElementById("btnGuardarClienteVenta");

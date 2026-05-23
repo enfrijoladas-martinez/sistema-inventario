@@ -4,6 +4,7 @@ let productos = [];
 let categoriasDisponibles = [];
 
 let categoriasTemporales = [];
+let margenesTemporales = [];
 
 let modo = "create";
 let idProductoEditando = null;
@@ -31,6 +32,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnCerrarCategorias = document.getElementById("btnCerrarCategorias");
     const btnCerrarCategoriasX = document.getElementById("btnCerrarCategoriasX");
     const btnAgregarCategoriaProducto = document.getElementById("btnAgregarCategoriaProducto");
+    const btnAbrirMargenesProducto = document.getElementById("btnAbrirMargenesProducto");
+    const btnCerrarMargenes = document.getElementById("btnCerrarMargenes");
+    const btnCerrarMargenesX = document.getElementById("btnCerrarMargenesX");
+    const btnAgregarMargenProducto = document.getElementById("btnAgregarMargenProducto");
     const btnDescargarPlantilla = document.getElementById("btnDescargarPlantilla");
     const btnCargaMasiva = document.getElementById("btnCargaMasiva");
 
@@ -63,6 +68,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnCargaMasiva) {
         btnCargaMasiva.addEventListener("click", cargarProductosMasivamente);
+    }
+
+    if (btnAbrirMargenesProducto) {
+        btnAbrirMargenesProducto.addEventListener("click", abrirModalMargenes);
+    }
+
+    if (btnCerrarMargenes) {
+        btnCerrarMargenes.addEventListener("click", cerrarModalMargenes);
+    }
+
+    if (btnCerrarMargenesX) {
+        btnCerrarMargenesX.addEventListener("click", cerrarModalMargenes);
+    }
+
+    if (btnAgregarMargenProducto) {
+        btnAgregarMargenProducto.addEventListener("click", agregarMargenTemporal);
+    }
+
+    const costoProd = document.getElementById("costoProd");
+    if (costoProd) {
+        costoProd.addEventListener("input", recalcularPrecios);
+    }
+
+    const monedaProd = document.getElementById("monedaProd");
+    if (monedaProd) {
+        monedaProd.addEventListener("change", recalcularPrecios);
     }
 
     $("#modalNuevoProducto").on("hidden.bs.modal", limpiarFormularioProducto);
@@ -295,10 +326,13 @@ async function guardarProducto() {
     const folio = document.getElementById("codigoProd")?.value.trim();
     const descripcion = document.getElementById("descripcionProd")?.value.trim();
     const costo = Number(document.getElementById("costoProd")?.value || 0);
+    const moneda = document.getElementById("monedaProd")?.value || "MXN";
 
     const payload = {
         descripcion,
         costo,
+        moneda,
+        margenes: margenesTemporales.slice(),
         categorias_ids: categoriasTemporales.map((cat) => Number(cat.id_cat)),
         subcategorias_ids: subcategoriasTemporales.map((sub) => Number(sub.id_subcat))
     };
@@ -306,9 +340,15 @@ async function guardarProducto() {
     if (modo === "create") {
         payload.folio = folio;
     } else if (modo === "edit" && productoOriginal) {
-        // En modo edición, quitar campos que no han cambiado
         if (productoOriginal.descripcion === payload.descripcion) delete payload.descripcion;
         if (Number(productoOriginal.costo) === payload.costo) delete payload.costo;
+        if ((productoOriginal.moneda || "MXN") === payload.moneda) delete payload.moneda;
+        
+        const margenesOriginal = (productoOriginal.margenes || []).slice().sort().join(",");
+        const margenesNuevas = payload.margenes.slice().sort().join(",");
+        if (margenesOriginal === margenesNuevas) {
+            delete payload.margenes;
+        }
         
         const catOriginalesStr = (productoOriginal.categorias || []).map(cat => cat.id_cat || cat.id_categoria || cat.id).sort().join(",");
         const catNuevasStr = payload.categorias_ids.slice().sort().join(",");
@@ -378,6 +418,13 @@ async function abrirEditarProducto(idProducto) {
         setValue("descripcionProd", producto.descripcion || "");
         setValue("costoProd", producto.costo || "");
 
+        const selectMoneda = document.getElementById("monedaProd");
+        if (selectMoneda) selectMoneda.value = producto.moneda || "MXN";
+
+        margenesTemporales = Array.isArray(producto.margenes) ? producto.margenes.slice() : [];
+        actualizarResumenMargenes();
+        recalcularPrecios();
+
         categoriasTemporales = (producto.categorias || []).map((cat) => ({
             id_cat: cat.id_cat || cat.id_categoria || cat.id,
             nombre: cat.nombre || cat.descripcion || "Categoría"
@@ -423,6 +470,11 @@ async function verDetalleProducto(idProducto) {
         setText("detalleCodigo", producto.clave || producto.folio || "");
         setText("detalleDescripcion", producto.descripcion || "");
         setText("detalleCosto", formatoMoneda(producto.costo || 0));
+        setText("detalleMoneda", producto.moneda || "MXN");
+        const margenesTexto = Array.isArray(producto.margenes) && producto.margenes.length
+            ? producto.margenes.map(m => `${m}%`).join(", ")
+            : "Sin márgenes";
+        setText("detalleMargenes", margenesTexto);
         setText("detalleCategorias", obtenerCategoriasTexto(producto));
         $("#modalDetalleProducto").modal("show");
 
@@ -503,6 +555,94 @@ function renderizarCategoriasTemporales() {
 
 function actualizarResumenCategorias() {
     setText("resumenCategoriasProducto", `${categoriasTemporales.length} categorías registradas`);
+}
+
+function abrirModalMargenes() {
+    setText("margenProductoCodigo", document.getElementById("codigoProd")?.value || "Nuevo producto");
+    setText("margenProductoDescripcion", document.getElementById("descripcionProd")?.value || "Sin definir");
+    renderizarMargenesTemporales();
+    const modal = document.getElementById("modalMargenesProducto");
+    if (modal) modal.style.display = "flex";
+}
+
+function cerrarModalMargenes() {
+    const modal = document.getElementById("modalMargenesProducto");
+    if (modal) modal.style.display = "none";
+}
+
+function agregarMargenTemporal() {
+    const input = document.getElementById("inputMargenProducto");
+    const valor = Number(input?.value);
+
+    if (!valor || valor <= 0) {
+        alertaInfo("Ingresa un porcentaje de margen válido mayor a 0.");
+        return;
+    }
+
+    if (margenesTemporales.includes(valor)) {
+        alertaInfo("El margen ya fue agregado.");
+        return;
+    }
+
+    margenesTemporales.push(valor);
+    margenesTemporales.sort((a, b) => a - b);
+
+    input.value = "";
+    actualizarResumenMargenes();
+    renderizarMargenesTemporales();
+    recalcularPrecios();
+}
+
+function eliminarMargenTemporal(valor) {
+    margenesTemporales = margenesTemporales.filter((m) => m !== valor);
+    actualizarResumenMargenes();
+    renderizarMargenesTemporales();
+    recalcularPrecios();
+}
+
+function renderizarMargenesTemporales() {
+    const contenedor = document.getElementById("listaMargenesProducto");
+    if (!contenedor) return;
+
+    if (margenesTemporales.length === 0) {
+        contenedor.innerHTML = `<p class="text-muted mb-0">No hay márgenes agregados.</p>`;
+        return;
+    }
+
+    contenedor.innerHTML = margenesTemporales.map((m) => `
+        <span class="badge badge-info p-2 mr-2 mb-2">
+            ${m}%
+            <button type="button" class="btn btn-sm text-white p-0 ml-2" onclick="eliminarMargenTemporal(${m})">
+                ×
+            </button>
+        </span>
+    `).join("");
+}
+
+function actualizarResumenMargenes() {
+    setText("resumenMargenesProducto", `${margenesTemporales.length} márgenes registrados`);
+}
+
+function recalcularPrecios() {
+    const div = document.getElementById("preciosCalculados");
+    if (!div) return;
+
+    const costo = Number(document.getElementById("costoProd")?.value || 0);
+    const moneda = document.getElementById("monedaProd")?.value || "MXN";
+
+    if (!margenesTemporales.length || !costo) {
+        div.textContent = margenesTemporales.length ? "Sin costo definido." : "Sin márgenes definidos.";
+        div.className = "text-muted small";
+        return;
+    }
+
+    const precios = margenesTemporales.map((m) => {
+        const precio = costo * (1 + m / 100);
+        return `${m}% → ${formatoMoneda(precio)} ${moneda}`;
+    });
+
+    div.innerHTML = precios.join(" | ");
+    div.className = "small";
 }
 
 
@@ -747,6 +887,13 @@ function limpiarFormularioProducto() {
     setValue("descripcionProd", "");
     setValue("costoProd", "");
 
+    const selectMoneda = document.getElementById("monedaProd");
+    if (selectMoneda) selectMoneda.value = "MXN";
+
+    margenesTemporales = [];
+    actualizarResumenMargenes();
+    recalcularPrecios();
+
     categoriasTemporales = [];
     actualizarResumenCategorias();    renderizarCategoriasTemporales();
     const inputCodigo = document.getElementById("codigoProd");
@@ -778,5 +925,6 @@ window.abrirEditarProducto = abrirEditarProducto;
 window.eliminarProducto = eliminarProducto;
 window.verDetalleProducto = verDetalleProducto;
 window.eliminarCategoriaTemporal = eliminarCategoriaTemporal;
+window.eliminarMargenTemporal = eliminarMargenTemporal;
 window.descargarPlantillaProductos = descargarPlantillaProductos;
 window.cargarProductosMasivamente = cargarProductosMasivamente;
