@@ -363,6 +363,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function cargarClientes(clienteSeleccionado = "") {
+    if (!selectClienteVenta) return;
     clientesCache = await getClientesAPI();
     if (clienteSeleccionado) {
       const c = clientesCache.find(cl => String(cl.id_cliente) === String(clienteSeleccionado));
@@ -1096,7 +1097,7 @@ return `
       });
 
       // Pre-seleccionar cliente en edición
-      if (ventaNormalizada.id_cliente) {
+      if (selectClienteVenta && ventaNormalizada.id_cliente) {
         const c = clientesCache.find(cl => Number(cl.id_cliente) === Number(ventaNormalizada.id_cliente));
         if (c) {
           clienteSeleccionadoId = Number(c.id_cliente);

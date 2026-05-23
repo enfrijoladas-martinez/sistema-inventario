@@ -113,8 +113,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function resetFormulario() {
     if (form) form.reset();
-    inpFecha.value = new Date().toISOString().slice(0, 16);
-    inpFecha.disabled = false;
+    if (inpFecha) {
+      inpFecha.value = new Date().toISOString().slice(0, 16);
+      inpFecha.disabled = false;
+    }
     modo = "create";
     idEditando = null;
   }
@@ -520,8 +522,10 @@ document.addEventListener("DOMContentLoaded", () => {
       modo = "edit";
       idEditando = detalle.id_mov;
 
-      inpFecha.value = fechaInputValue(detalle.fecha);
-      inpFecha.disabled = true;
+      if (inpFecha) {
+        inpFecha.value = fechaInputValue(detalle.fecha);
+        inpFecha.disabled = true;
+      }
       selectTipo.value = detalle.tipo ? "entrada" : "salida";
       inpCantidad.value = detalle.cantidad ?? "";
 

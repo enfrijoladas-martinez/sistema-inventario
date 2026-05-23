@@ -467,6 +467,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Delete the warehouse
         await eliminarAlmacenAPI(idAlmacen);
+        almacenesPorProducto = null;
+        productoFiltroId = null;
+        if (inputBuscarProducto) inputBuscarProducto.value = "";
+        if (btnLimpiarFiltro) btnLimpiarFiltro.style.display = "none";
         almacenesCache = await getAlmacenesAPI();
         renderTabla(inputBuscar ? inputBuscar.value : "");
         await Swal.fire({
@@ -502,6 +506,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       await eliminarAlmacenAPI(idAlmacen);
+      almacenesPorProducto = null;
+      productoFiltroId = null;
+      if (inputBuscarProducto) inputBuscarProducto.value = "";
+      if (btnLimpiarFiltro) btnLimpiarFiltro.style.display = "none";
       almacenesCache = await getAlmacenesAPI();
       renderTabla(inputBuscar ? inputBuscar.value : "");
     } catch (err) {
