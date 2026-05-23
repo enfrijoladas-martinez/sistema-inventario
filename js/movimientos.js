@@ -493,7 +493,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (detalleIdMovimiento) detalleIdMovimiento.textContent = detalle.id_mov ?? "";
       if (detalleTipoMovimiento) detalleTipoMovimiento.textContent = textoTipo(detalle.tipo);
-      if (detalleIdVentaMovimiento) detalleIdVentaMovimiento.textContent = detalle.id_venta || "No aplica";
+      if (detalleIdVentaMovimiento) {
+        const folioVenta = detalle.venta?.folio || detalle.folio_venta || null;
+        detalleIdVentaMovimiento.textContent = folioVenta || "No aplica";
+      }
       if (detalleProductoMovimiento) detalleProductoMovimiento.textContent = detalle.descripcion_producto || "";
       if (detalleAlmacenMovimiento) detalleAlmacenMovimiento.textContent = detalle.nombre_almacen || "";
       if (detalleCantidadMovimiento) detalleCantidadMovimiento.textContent = detalle.cantidad ?? "";
