@@ -860,17 +860,20 @@ return `
           const convertido = Number((precioCalculado * tasa).toFixed(2));
           const opt = document.createElement("option");
           opt.value = convertido;
+          opt.setAttribute("data-moneda", "MXN");
           opt.textContent = `$${money(convertido)} MXN (${margen}% margen, convertido de $${money(precioCalculado)} USD)`;
           inpPrecioVenta.appendChild(opt);
         }
         const optUsd = document.createElement("option");
         optUsd.value = Number(precioCalculado.toFixed(2));
+        optUsd.setAttribute("data-moneda", "USD");
         optUsd.textContent = `$${money(precioCalculado)} USD (${margen}% margen)`;
         inpPrecioVenta.appendChild(optUsd);
       } else {
         precioCalculado = Number(precioCalculado.toFixed(2));
         const opt = document.createElement("option");
         opt.value = precioCalculado;
+        opt.setAttribute("data-moneda", "MXN");
         opt.textContent = `$${money(precioCalculado)} MXN (${margen}% margen)`;
         inpPrecioVenta.appendChild(opt);
       }
@@ -1221,6 +1224,15 @@ return `
       const idAlmacen = Number(selectAlmacenVenta.value);
       const cantidad = Number(inpCantidadVenta.value);
       const precio = Number(inpPrecioVenta.value);
+      const selectedOption = inpPrecioVenta.options[inpPrecioVenta.selectedIndex];
+      const monedaSeleccionada = selectedOption?.getAttribute("data-moneda") || "MXN";
+      let precioFinal = precio;
+      if (monedaSeleccionada === "USD") {
+        const tasa = tipoCambio || Number(inpTipoCambio.value) || 0;
+        if (tasa > 0) {
+          precioFinal = Number((precio * tasa).toFixed(2));
+        }
+      }
 
       if (!idProducto || idProducto === 0) {
         await showWarning("Selecciona un producto");
@@ -1263,7 +1275,7 @@ return `
         detalleVentaTemporal[idxExistente].cantidad_vendida =
           Number(detalleVentaTemporal[idxExistente].cantidad_vendida) + (Number.isFinite(cantidad) ? cantidad : 0);
         detalleVentaTemporal[idxExistente].precio_venta =
-          Number.isFinite(precio) ? precio : 0;
+          Number.isFinite(precioFinal) ? precioFinal : 0;
       } else {
         detalleVentaTemporal.push({
           id_producto: Number.isFinite(idProducto) ? idProducto : 0,
@@ -1271,7 +1283,7 @@ return `
           id_almacen: Number.isFinite(idAlmacen) ? idAlmacen : 0,
           nombre_almacen: nombreAlmacen,
           cantidad_vendida: Number.isFinite(cantidad) ? cantidad : 0,
-          precio_venta: Number.isFinite(precio) ? precio : 0
+          precio_venta: Number.isFinite(precioFinal) ? precioFinal : 0
         });
       }
 
@@ -1280,7 +1292,9 @@ return `
       selectProductoVenta.value = "";
       selectAlmacenVenta.value = "";
       inpCantidadVenta.value = "";
-      inpPrecioVenta.value = "";
+      productoSeleccionadoId = null;
+      inpPrecioVenta.innerHTML = '<option value="">Seleccione un producto primero...</option>';
+      inpPrecioVenta.disabled = true;
     });
   }
 
