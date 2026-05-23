@@ -177,6 +177,7 @@ async function cargarReportes() {
     renderChartVentasCliente(ventasPorCliente);
     renderProductoMasVendido(productoMasVendido, topProductos);
     renderVendidosPorCategoria(vendidosPorCategoria);
+    renderStockMinimo();
 
     prepararDatosExcel({
         ventasGlobal,
@@ -588,6 +589,67 @@ function renderTablaVendidosCategoria(data) {
             </tr>
         `;
     });
+}
+
+// STOCK MÍNIMO
+async function renderStockMinimo() {
+    const tbody = document.querySelector("#tablaStockMinimo tbody");
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="7">Cargando datos...</td></tr>';
+
+    try {
+        const inventarios = await obtenerDatos("/api/inventarios/") || [];
+
+        const productosBajoStock = inventarios
+            .filter((inv) => {
+                const stock = Number(inv.stock || 0);
+                const minStock = Number(inv.min_stock || 0);
+                return stock <= minStock;
+            })
+            .sort((a, b) => {
+                const diffA = Number(a.stock || 0) - Number(a.min_stock || 0);
+                const diffB = Number(b.stock || 0) - Number(b.min_stock || 0);
+                return diffA - diffB;
+            });
+
+        tbody.innerHTML = "";
+
+        if (productosBajoStock.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-success font-weight-bold">
+                        <i class="fas fa-check-circle mr-2"></i>Todos los productos tienen stock suficiente
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        productosBajoStock.forEach((inv) => {
+            const stock = Number(inv.stock || 0);
+            const minStock = Number(inv.min_stock || 0);
+            const diferencia = stock - minStock;
+            const estado = stock === 0
+                ? '<span class="badge badge-danger">Sin stock</span>'
+                : '<span class="badge badge-warning">Por debajo del mínimo</span>';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${inv.folio_producto || inv.folio || ""}</td>
+                    <td>${inv.descripcion_producto || inv.producto || inv.nombre_producto || `Producto ${inv.id_producto}`}</td>
+                    <td>${inv.nombre_almacen || inv.almacen || `Almacén ${inv.id_almacen}`}</td>
+                    <td class="font-weight-bold">${stock}</td>
+                    <td>${minStock}</td>
+                    <td class="font-weight-bold text-danger">${diferencia}</td>
+                    <td>${estado}</td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        console.error("Error al cargar stock mínimo:", error);
+        tbody.innerHTML = '<tr><td colspan="7" class="text-danger">Error al cargar datos</td></tr>';
+    }
 }
 
 
