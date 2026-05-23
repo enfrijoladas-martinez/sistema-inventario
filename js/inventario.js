@@ -136,22 +136,119 @@ document.addEventListener("DOMContentLoaded", () => {
     return Array.isArray(res.data) ? res.data : [];
   }
 
+  async function buscarProductosAPI(valor) {
+    const res = await apiFetch(`/api/productos/${encodeURIComponent(valor)}`, { auth: false });
+    return Array.isArray(res.data) ? res.data : [];
+  }
+
   async function getAlmacenesAPI() {
     const res = await apiFetch("/api/almacenes/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
   }
 
-  function cargarProductos() {
-    selectProducto.innerHTML = `
-      <option value="">Elegir producto...</option>
-    `;
+  let productoSeleccionadoId = null;
+  let timeoutBusqueda = null;
 
-    productosCache.forEach((p) => {
-      const option = document.createElement("option");
-      option.value = p.id_producto;
-      option.textContent =
-        p.descripcion_producto || p.nombre_producto || p.descripcion || `Producto ${p.id_producto}`;
-      selectProducto.appendChild(option);
+  function crearDropdownResultados() {
+    let dropdown = document.getElementById("dropdownProductos");
+    if (!dropdown) {
+      dropdown = document.createElement("div");
+      dropdown.id = "dropdownProductos";
+      dropdown.className = "dropdown-menu w-100 show";
+      dropdown.style.position = "absolute";
+      dropdown.style.zIndex = "1000";
+      dropdown.style.maxHeight = "300px";
+      dropdown.style.overflowY = "auto";
+      dropdown.style.display = "none";
+      dropdown.style.width = "100%";
+      dropdown.style.marginTop = "0px";
+      const parent = selectProducto.parentNode;
+      if (getComputedStyle(parent).position === "static") {
+        parent.style.position = "relative";
+      }
+      parent.appendChild(dropdown);
+    }
+    return dropdown;
+  }
+
+  if (selectProducto) {
+    selectProducto.addEventListener("input", () => {
+      const valor = selectProducto.value.trim();
+      productoSeleccionadoId = null;
+      selectAlmacen.innerHTML = '<option value="">Primero seleccione un producto...</option>';
+      selectAlmacen.disabled = true;
+      clearTimeout(timeoutBusqueda);
+
+      if (!valor || valor.length < 2) {
+        const dropdown = document.getElementById("dropdownProductos");
+        if (dropdown) dropdown.style.display = "none";
+        return;
+      }
+
+      timeoutBusqueda = setTimeout(async () => {
+        try {
+          const productos = await buscarProductosAPI(valor);
+          const dropdown = crearDropdownResultados();
+          dropdown.innerHTML = "";
+
+          if (productos.length === 0) {
+            dropdown.innerHTML = '<div class="dropdown-item text-muted">No se encontraron productos</div>';
+            dropdown.style.display = "block";
+            return;
+          }
+
+          productos.slice(0, 10).forEach((p) => {
+            const item = document.createElement("a");
+            item.className = "dropdown-item";
+            item.href = "#";
+            item.style.cursor = "pointer";
+            const nombre = p.descripcion || p.nombre_producto || `Producto ${p.id_producto}`;
+            item.innerHTML = `<strong>${p.folio || ""}</strong> - ${nombre}`;
+            item.setAttribute("data-id", p.id_producto);
+            item.setAttribute("data-folio", p.folio || "");
+            item.setAttribute("data-nombre", nombre);
+
+            item.addEventListener("click", async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              productoSeleccionadoId = Number(p.id_producto);
+              selectProducto.value = `${p.folio || ""} - ${nombre}`;
+              dropdown.style.display = "none";
+
+              selectAlmacen.innerHTML = '<option value="">Cargando almacenes...</option>';
+              selectAlmacen.disabled = true;
+              try {
+                const almacenes = await getAlmacenesAPI();
+                almacenesCache = almacenes;
+                selectAlmacen.innerHTML = '<option value="">Elegir almacén...</option>';
+                almacenesCache.forEach((a) => {
+                  const opt = document.createElement("option");
+                  opt.value = a.id_almacen;
+                  opt.textContent = a.nombre_almacen || a.nombre || a.descripcion || `Almacén ${a.id_almacen}`;
+                  selectAlmacen.appendChild(opt);
+                });
+              } catch (error) {
+                selectAlmacen.innerHTML = '<option value="">Error al cargar almacenes</option>';
+              } finally {
+                selectAlmacen.disabled = false;
+              }
+            });
+
+            dropdown.appendChild(item);
+          });
+
+          dropdown.style.display = "block";
+        } catch (error) {
+          console.error("Error al buscar productos:", error);
+        }
+      }, 300);
+    });
+
+    document.addEventListener("click", (e) => {
+      const dropdown = document.getElementById("dropdownProductos");
+      if (dropdown && !selectProducto.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = "none";
+      }
     });
   }
 
@@ -222,6 +319,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function resetFormulario() {
     form.reset();
+    productoSeleccionadoId = null;
+    selectProducto.value = "";
+    const dropdown = document.getElementById("dropdownProductos");
+    if (dropdown) dropdown.style.display = "none";
+    selectAlmacen.innerHTML = '<option value="">Elegir almacén...</option>';
+    selectAlmacen.disabled = false;
     tituloModal.textContent = "Registrar Inventario";
   }
 
@@ -262,7 +365,6 @@ document.addEventListener("DOMContentLoaded", () => {
       productosCache = productos;
       almacenesCache = almacenes;
 
-      cargarProductos();
       cargarAlmacenes();
       renderTabla();
     } catch (error) {
@@ -272,13 +374,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $(modalRegistro).on("show.bs.modal", function () {
     resetFormulario();
+    cargarAlmacenes();
   });
 
   if (btnGuardar) {
     btnGuardar.addEventListener("click", async (e) => {
       e.preventDefault();
 
-      const idProducto = Number(selectProducto.value);
+      const idProducto = productoSeleccionadoId;
       const idAlmacen = Number(selectAlmacen.value);
       const stock = Number(inpStock.value);
       const minStock = Number(inpMinStock.value);
