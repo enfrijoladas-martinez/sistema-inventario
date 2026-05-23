@@ -4,7 +4,6 @@ let productos = [];
 let categoriasDisponibles = [];
 
 let categoriasTemporales = [];
-let margenesTemporales = [];
 
 let modo = "create";
 let idProductoEditando = null;
@@ -32,10 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnCerrarCategorias = document.getElementById("btnCerrarCategorias");
     const btnCerrarCategoriasX = document.getElementById("btnCerrarCategoriasX");
     const btnAgregarCategoriaProducto = document.getElementById("btnAgregarCategoriaProducto");
-    const btnAbrirMargenesProducto = document.getElementById("btnAbrirMargenesProducto");
-    const btnCerrarMargenes = document.getElementById("btnCerrarMargenes");
-    const btnCerrarMargenesX = document.getElementById("btnCerrarMargenesX");
-    const btnAgregarMargenProducto = document.getElementById("btnAgregarMargenProducto");
     const btnDescargarPlantilla = document.getElementById("btnDescargarPlantilla");
     const btnCargaMasiva = document.getElementById("btnCargaMasiva");
 
@@ -70,21 +65,11 @@ document.addEventListener("DOMContentLoaded", () => {
         btnCargaMasiva.addEventListener("click", cargarProductosMasivamente);
     }
 
-    if (btnAbrirMargenesProducto) {
-        btnAbrirMargenesProducto.addEventListener("click", abrirModalMargenes);
-    }
-
-    if (btnCerrarMargenes) {
-        btnCerrarMargenes.addEventListener("click", cerrarModalMargenes);
-    }
-
-    if (btnCerrarMargenesX) {
-        btnCerrarMargenesX.addEventListener("click", cerrarModalMargenes);
-    }
-
-    if (btnAgregarMargenProducto) {
-        btnAgregarMargenProducto.addEventListener("click", agregarMargenTemporal);
-    }
+    const margenInputs = ["margen1Prod", "margen2Prod", "margen3Prod"];
+    margenInputs.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", recalcularPrecios);
+    });
 
     const costoProd = document.getElementById("costoProd");
     if (costoProd) {
@@ -328,11 +313,16 @@ async function guardarProducto() {
     const costo = Number(document.getElementById("costoProd")?.value || 0);
     const moneda = document.getElementById("monedaProd")?.value || "MXN";
 
+    const m1 = Number(document.getElementById("margen1Prod")?.value) || null;
+    const m2 = Number(document.getElementById("margen2Prod")?.value) || null;
+    const m3 = Number(document.getElementById("margen3Prod")?.value) || null;
+    const margenes = [m1, m2, m3].filter((m) => m !== null);
+
     const payload = {
         descripcion,
         costo,
         moneda,
-        margenes: margenesTemporales.slice(),
+        margenes,
         categorias_ids: categoriasTemporales.map((cat) => Number(cat.id_cat)),
         subcategorias_ids: subcategoriasTemporales.map((sub) => Number(sub.id_subcat))
     };
@@ -344,11 +334,9 @@ async function guardarProducto() {
         if (Number(productoOriginal.costo) === payload.costo) delete payload.costo;
         if ((productoOriginal.moneda || "MXN") === payload.moneda) delete payload.moneda;
         
-        const margenesOriginal = (productoOriginal.margenes || []).slice().sort().join(",");
-        const margenesNuevas = payload.margenes.slice().sort().join(",");
-        if (margenesOriginal === margenesNuevas) {
-            delete payload.margenes;
-        }
+        const margenesOrig = (productoOriginal.margenes || []).slice().sort().join(",");
+        const margenesNew = margenes.slice().sort().join(",");
+        if (margenesOrig === margenesNew) delete payload.margenes;
         
         const catOriginalesStr = (productoOriginal.categorias || []).map(cat => cat.id_cat || cat.id_categoria || cat.id).sort().join(",");
         const catNuevasStr = payload.categorias_ids.slice().sort().join(",");
@@ -421,8 +409,10 @@ async function abrirEditarProducto(idProducto) {
         const selectMoneda = document.getElementById("monedaProd");
         if (selectMoneda) selectMoneda.value = producto.moneda || "MXN";
 
-        margenesTemporales = Array.isArray(producto.margenes) ? producto.margenes.slice() : [];
-        actualizarResumenMargenes();
+        const margenes = Array.isArray(producto.margenes) ? producto.margenes : [];
+        setValue("margen1Prod", margenes[0] ?? "");
+        setValue("margen2Prod", margenes[1] ?? "");
+        setValue("margen3Prod", margenes[2] ?? "");
         recalcularPrecios();
 
         categoriasTemporales = (producto.categorias || []).map((cat) => ({
@@ -557,93 +547,22 @@ function actualizarResumenCategorias() {
     setText("resumenCategoriasProducto", `${categoriasTemporales.length} categorías registradas`);
 }
 
-function abrirModalMargenes() {
-    setText("margenProductoCodigo", document.getElementById("codigoProd")?.value || "Nuevo producto");
-    setText("margenProductoDescripcion", document.getElementById("descripcionProd")?.value || "Sin definir");
-    renderizarMargenesTemporales();
-    const modal = document.getElementById("modalMargenesProducto");
-    if (modal) modal.style.display = "flex";
-}
-
-function cerrarModalMargenes() {
-    const modal = document.getElementById("modalMargenesProducto");
-    if (modal) modal.style.display = "none";
-}
-
-function agregarMargenTemporal() {
-    const input = document.getElementById("inputMargenProducto");
-    const valor = Number(input?.value);
-
-    if (!valor || valor <= 0) {
-        alertaInfo("Ingresa un porcentaje de margen válido mayor a 0.");
-        return;
-    }
-
-    if (margenesTemporales.includes(valor)) {
-        alertaInfo("El margen ya fue agregado.");
-        return;
-    }
-
-    margenesTemporales.push(valor);
-    margenesTemporales.sort((a, b) => a - b);
-
-    input.value = "";
-    actualizarResumenMargenes();
-    renderizarMargenesTemporales();
-    recalcularPrecios();
-}
-
-function eliminarMargenTemporal(valor) {
-    margenesTemporales = margenesTemporales.filter((m) => m !== valor);
-    actualizarResumenMargenes();
-    renderizarMargenesTemporales();
-    recalcularPrecios();
-}
-
-function renderizarMargenesTemporales() {
-    const contenedor = document.getElementById("listaMargenesProducto");
-    if (!contenedor) return;
-
-    if (margenesTemporales.length === 0) {
-        contenedor.innerHTML = `<p class="text-muted mb-0">No hay márgenes agregados.</p>`;
-        return;
-    }
-
-    contenedor.innerHTML = margenesTemporales.map((m) => `
-        <span class="badge badge-info p-2 mr-2 mb-2">
-            ${m}%
-            <button type="button" class="btn btn-sm text-white p-0 ml-2" onclick="eliminarMargenTemporal(${m})">
-                ×
-            </button>
-        </span>
-    `).join("");
-}
-
-function actualizarResumenMargenes() {
-    setText("resumenMargenesProducto", `${margenesTemporales.length} márgenes registrados`);
-}
-
 function recalcularPrecios() {
-    const div = document.getElementById("preciosCalculados");
-    if (!div) return;
-
     const costo = Number(document.getElementById("costoProd")?.value || 0);
     const moneda = document.getElementById("monedaProd")?.value || "MXN";
 
-    if (!margenesTemporales.length || !costo) {
-        div.textContent = margenesTemporales.length ? "Sin costo definido." : "Sin márgenes definidos.";
-        div.className = "text-muted small";
-        return;
+    for (let i = 1; i <= 3; i++) {
+      const margen = Number(document.getElementById(`margen${i}Prod`)?.value) || 0;
+      const el = document.getElementById(`precio${i}Calc`);
+      if (!el) continue;
+      if (costo > 0 && margen > 0) {
+        const precio = costo * (1 + margen / 100);
+        el.textContent = `${formatoMoneda(precio)} ${moneda}`;
+      } else {
+        el.textContent = "$0.00";
+      }
     }
-
-    const precios = margenesTemporales.map((m) => {
-        const precio = costo * (1 + m / 100);
-        return `${m}% → ${formatoMoneda(precio)} ${moneda}`;
-    });
-
-    div.innerHTML = precios.join(" | ");
-    div.className = "small";
-}
+  }
 
 
 function abrirModalSubcategorias() {
@@ -890,8 +809,9 @@ function limpiarFormularioProducto() {
     const selectMoneda = document.getElementById("monedaProd");
     if (selectMoneda) selectMoneda.value = "MXN";
 
-    margenesTemporales = [];
-    actualizarResumenMargenes();
+    setValue("margen1Prod", "");
+    setValue("margen2Prod", "");
+    setValue("margen3Prod", "");
     recalcularPrecios();
 
     categoriasTemporales = [];
