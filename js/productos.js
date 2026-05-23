@@ -845,6 +845,5 @@ window.abrirEditarProducto = abrirEditarProducto;
 window.eliminarProducto = eliminarProducto;
 window.verDetalleProducto = verDetalleProducto;
 window.eliminarCategoriaTemporal = eliminarCategoriaTemporal;
-window.eliminarMargenTemporal = eliminarMargenTemporal;
 window.descargarPlantillaProductos = descargarPlantillaProductos;
 window.cargarProductosMasivamente = cargarProductosMasivamente;
