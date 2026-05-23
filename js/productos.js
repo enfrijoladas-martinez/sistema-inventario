@@ -323,8 +323,7 @@ async function guardarProducto() {
         costo,
         moneda,
         margenes,
-        categorias_ids: categoriasTemporales.map((cat) => Number(cat.id_cat)),
-        subcategorias_ids: subcategoriasTemporales.map((sub) => Number(sub.id_subcat))
+        categorias_ids: categoriasTemporales.map((cat) => Number(cat.id_cat))
     };
 
     if (modo === "create") {
@@ -350,10 +349,6 @@ async function guardarProducto() {
             payload.folio = folio; // Permitir edición y enviarlo si cambia
         }
 
-        if (payload.subcategorias_ids && payload.subcategorias_ids.length === 0) {
-            delete payload.subcategorias_ids; // Si está vacío y no manejamos bien subcategorías, evitar que lo rompan
-        }
-        
         if (Object.keys(payload).length === 0) {
             Swal.fire({ icon: "warning", title: "Sin cambios", text: "No se hicieron modificaciones." });
             return;
