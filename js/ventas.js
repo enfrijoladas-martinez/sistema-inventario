@@ -37,6 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let idVentaEditando = null;
   let detalleVentaTemporal = [];
   let productoSeleccionadoId = null;
+  let clienteSeleccionadoId = null;
+  let stockPorProducto = {};
   let tipoCambio = null;
 
   let ventasCache = [];
@@ -276,7 +278,8 @@ document.addEventListener("DOMContentLoaded", () => {
       id_municipio: v.id_municipio ? Number(v.id_municipio) : null,
       estado: v.estado ?? v.nombre_estado ?? resolverEstadoPorId(v.id_estado) ?? null,
       municipio: v.municipio ?? v.nombre_municipio ?? resolverMunicipioPorId(v.id_municipio) ?? null,
-      cliente: v.cliente ?? (`${v.nombre || ""} ${v.apellido_paterno || ""}`.trim() || null)
+      cliente: v.cliente ?? (`${v.nombre || ""} ${v.apellido_paterno || ""}`.trim() || null),
+      id_cliente: v.id_cliente ? Number(v.id_cliente) : null
     };
   }
 
@@ -360,18 +363,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function cargarClientes(clienteSeleccionado = "") {
-    if (!selectClienteVenta) return;
     clientesCache = await getClientesAPI();
-    selectClienteVenta.innerHTML = `<option value="">Seleccionar cliente...</option>`;
-    clientesCache.forEach((c) => {
-      const option = document.createElement("option");
-      option.value = c.id_cliente;
-      option.textContent = `${c.folio || ""} - ${c.nombre || ""} ${c.apellido_paterno || ""}`;
-      if (String(c.id_cliente) === String(clienteSeleccionado)) {
-        option.selected = true;
+    if (clienteSeleccionado) {
+      const c = clientesCache.find(cl => String(cl.id_cliente) === String(clienteSeleccionado));
+      if (c) {
+        clienteSeleccionadoId = Number(c.id_cliente);
+        selectClienteVenta.value = `${c.folio || ""} - ${c.nombre || ""} ${c.apellido_paterno || ""}`;
       }
-      selectClienteVenta.appendChild(option);
-    });
+    }
   }
 
   async function cargarEstadosClienteVenta() {
@@ -441,7 +440,37 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
-  function getOpcionesAlmacenesHTML(idSeleccionado = "") {
+  async function cargarStockDetalle() {
+    const idsUnicos = [...new Set(detalleVentaTemporal.map(item => item.id_producto).filter(Boolean))];
+    stockPorProducto = {};
+    for (const id of idsUnicos) {
+      try {
+        const res = await apiFetch(`/almacenes/por-producto/${id}`, { auth: false });
+        stockPorProducto[id] = res.data || [];
+      } catch {
+        stockPorProducto[id] = [];
+      }
+    }
+  }
+
+  function getOpcionesAlmacenesHTML(idSeleccionado = "", idProducto = null) {
+    const stocks = idProducto ? (stockPorProducto[idProducto] || []) : [];
+
+    if (stocks.length > 0) {
+      return `
+        <option value="">Elegir almacén...</option>
+        ${stocks.map((a) => {
+          const stock = a.stock !== undefined ? a.stock : (a.cantidad || 0);
+          const nombre = a.nombre || a.nombre_almacen || `Almacén ${a.id_almacen}`;
+          return `
+            <option value="${a.id_almacen}" ${String(a.id_almacen) === String(idSeleccionado) ? "selected" : ""}>
+              ${nombre} (Stock: ${stock})
+            </option>
+          `;
+        }).join("")}
+      `;
+    }
+
     return `
       <option value="">Elegir almacén...</option>
       ${almacenesCache.map((a) => `
@@ -488,7 +517,7 @@ return `
             <td>${item.nombre_producto}</td>
             <td>
               <select class="form-control form-control-sm detalle-almacen">
-                ${getOpcionesAlmacenesHTML(item.id_almacen)}
+                ${getOpcionesAlmacenesHTML(item.id_almacen, item.id_producto)}
               </select>
             </td>
             <td>
@@ -648,7 +677,12 @@ return `
       selectMunicipio.disabled = true;
     }
 
-    if (selectClienteVenta) selectClienteVenta.value = "";
+    clienteSeleccionadoId = null;
+    if (selectClienteVenta) {
+      selectClienteVenta.value = "";
+      const dropdown = document.getElementById("dropdownClientesVenta");
+      if (dropdown) dropdown.style.display = "none";
+    }
 
     if (selectProductoVenta) {
       cargarProductos();
@@ -918,7 +952,7 @@ return `
 
     const idEstado = selectEstado?.value ? Number(selectEstado.value) : null;
     const idMunicipio = selectMunicipio?.value ? Number(selectMunicipio.value) : null;
-    const idCliente = selectClienteVenta?.value ? Number(selectClienteVenta.value) : null;
+    const idCliente = clienteSeleccionadoId;
 
     return {
       folio,
@@ -1061,6 +1095,16 @@ return `
         };
       });
 
+      // Pre-seleccionar cliente en edición
+      if (ventaNormalizada.id_cliente) {
+        const c = clientesCache.find(cl => Number(cl.id_cliente) === Number(ventaNormalizada.id_cliente));
+        if (c) {
+          clienteSeleccionadoId = Number(c.id_cliente);
+          selectClienteVenta.value = `${c.folio || ""} - ${c.nombre || ""} ${c.apellido_paterno || ""}`;
+        }
+      }
+
+      await cargarStockDetalle();
       renderDetalleTemporal();
 
       tituloModal.textContent = `Editar Venta ${ventaNormalizada.folio}`;
@@ -1163,6 +1207,7 @@ return `
               try {
                 const resStock = await apiFetch(`/almacenes/por-producto/${p.id_producto}`, { auth: false });
                 const almacenesStock = resStock.data || [];
+                stockPorProducto[p.id_producto] = almacenesStock;
                 
                 selectAlmacenVenta.innerHTML = `<option value="">Elegir almacén...</option>`;
                 
@@ -1199,6 +1244,89 @@ return `
     document.addEventListener("click", (e) => {
       const dropdown = document.getElementById("dropdownProductosVenta");
       if (dropdown && !selectProductoVenta.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = "none";
+      }
+    });
+  }
+
+  // CLIENTE: search-as-you-type
+  let timeoutBusquedaCliente = null;
+
+  function crearDropdownClientes() {
+    let dropdown = document.getElementById("dropdownClientesVenta");
+    if (!dropdown) {
+      dropdown = document.createElement("div");
+      dropdown.id = "dropdownClientesVenta";
+      dropdown.className = "dropdown-menu w-100 show";
+      dropdown.style.position = "absolute";
+      dropdown.style.zIndex = "1000";
+      dropdown.style.maxHeight = "300px";
+      dropdown.style.overflowY = "auto";
+      dropdown.style.display = "none";
+      const parent = selectClienteVenta.parentNode;
+      if (getComputedStyle(parent).position === "static") {
+        parent.style.position = "relative";
+      }
+      parent.appendChild(dropdown);
+    }
+    return dropdown;
+  }
+
+  if (selectClienteVenta) {
+    selectClienteVenta.addEventListener("input", () => {
+      const valor = selectClienteVenta.value.trim();
+      clienteSeleccionadoId = null;
+      clearTimeout(timeoutBusquedaCliente);
+
+      if (!valor || valor.length < 1) {
+        const dropdown = document.getElementById("dropdownClientesVenta");
+        if (dropdown) dropdown.style.display = "none";
+        return;
+      }
+
+      timeoutBusquedaCliente = setTimeout(() => {
+        const filtrados = clientesCache.filter(c => {
+          const texto = `${c.folio || ""} ${c.nombre || ""} ${c.apellido_paterno || ""} ${c.apellido_materno || ""}`.toLowerCase();
+          return texto.includes(valor.toLowerCase());
+        });
+
+        const dropdown = crearDropdownClientes();
+        dropdown.innerHTML = "";
+
+        if (filtrados.length === 0) {
+          dropdown.innerHTML = '<div class="dropdown-item text-muted">No se encontraron clientes</div>';
+          dropdown.style.display = "block";
+          return;
+        }
+
+        filtrados.slice(0, 10).forEach(c => {
+          const item = document.createElement("a");
+          item.className = "dropdown-item";
+          item.href = "#";
+          item.style.cursor = "pointer";
+          const label = `${c.folio || ""} - ${c.nombre || ""} ${c.apellido_paterno || ""}`;
+          item.innerHTML = `<strong>${c.folio || ""}</strong> - ${c.nombre || ""} ${c.apellido_paterno || ""}`;
+          item.setAttribute("data-id", c.id_cliente);
+          item.setAttribute("data-label", label);
+
+          item.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            clienteSeleccionadoId = Number(c.id_cliente);
+            selectClienteVenta.value = label;
+            dropdown.style.display = "none";
+          });
+
+          dropdown.appendChild(item);
+        });
+
+        dropdown.style.display = "block";
+      }, 300);
+    });
+
+    document.addEventListener("click", (e) => {
+      const dropdown = document.getElementById("dropdownClientesVenta");
+      if (dropdown && !selectClienteVenta.contains(e.target) && !dropdown.contains(e.target)) {
         dropdown.style.display = "none";
       }
     });
@@ -1300,6 +1428,7 @@ return `
         });
       }
 
+      await cargarStockDetalle();
       renderDetalleTemporal();
 
       selectProductoVenta.value = "";
@@ -1479,7 +1608,9 @@ return `
         await showSuccess(res?.message || "Cliente creado correctamente");
         await cargarClientes();
         if (res?.data?.id_cliente) {
-          selectClienteVenta.value = res.data.id_cliente;
+          clienteSeleccionadoId = Number(res.data.id_cliente);
+          const c = clientesCache.find(cl => String(cl.id_cliente) === String(res.data.id_cliente));
+          selectClienteVenta.value = c ? `${c.folio || ""} - ${c.nombre || ""} ${c.apellido_paterno || ""}` : "";
         }
         $("#modalNuevoClienteVenta").modal("hide");
       } catch (error) {

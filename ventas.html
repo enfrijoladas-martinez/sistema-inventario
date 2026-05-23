@@ -305,10 +305,8 @@
 
     <div class="form-group">
         <label for="selectClienteVenta">Cliente</label>
-        <div class="input-group">
-            <select id="selectClienteVenta" class="form-control">
-                <option value="">Seleccionar cliente...</option>
-            </select>
+        <div class="input-group" style="position: relative;">
+            <input type="text" id="selectClienteVenta" class="form-control" placeholder="Buscar cliente por nombre o folio..." autocomplete="off">
             <div class="input-group-append">
                 <button type="button" class="btn btn-success" id="btnNuevoClienteVenta" title="Nuevo Cliente">
                     <i class="fas fa-plus"></i>

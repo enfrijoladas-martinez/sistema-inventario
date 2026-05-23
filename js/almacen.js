@@ -109,6 +109,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  async function actualizarInventarioAPI(idInventario, payload) {
+    return await apiFetch(`/api/inventarios/${idInventario}`, {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    });
+  }
+
   async function getCategoriasAPI() {
     const res = await apiFetch("/api/categorias/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
@@ -353,10 +360,107 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function eliminarAlmacen(idAlmacen, folio) {
+    // Check if warehouse has inventory
+    let inventarios = [];
+    try {
+      const res = await apiFetch("/api/inventarios/", { auth: false });
+      inventarios = Array.isArray(res.data) ? res.data : [];
+    } catch {
+      // proceed assuming no inventory
+    }
+
+    const invDelAlmacen = inventarios.filter(
+      (inv) => Number(inv.id_almacen) === Number(idAlmacen)
+    );
+    const otrosAlmacenes = almacenesCache.filter(
+      (a) => Number(a.id_almacen) !== Number(idAlmacen)
+    );
+
+    // CASE 1: Has inventory but no other warehouse to move to
+    if (invDelAlmacen.length > 0 && otrosAlmacenes.length === 0) {
+      await Swal.fire({
+        icon: "error",
+        title: "No se puede eliminar",
+        text: `El almacén "${folio}" tiene ${invDelAlmacen.length} registro(s) de inventario y no hay otros almacenes disponibles para moverlos. Cree otro almacén primero.`,
+        confirmButtonText: "Entendido"
+      });
+      return;
+    }
+
+    // CASE 2: Has inventory and there are other warehouses — offer to move
+    if (invDelAlmacen.length > 0) {
+      const opciones = otrosAlmacenes.map(
+        (a) => `<option value="${a.id_almacen}">${a.folio || ""} - ${a.nombre || ""}</option>`
+      ).join("");
+
+      const result = await Swal.fire({
+        title: `Mover inventario de "${folio}"`,
+        html: `
+          <p class="mb-3">Este almacén tiene <strong>${invDelAlmacen.length} registro(s)</strong> de inventario.</p>
+          <p class="mb-2">Seleccione el almacén de destino:</p>
+          <select id="destinoAlmacen" class="form-control">
+            <option value="">Seleccionar...</option>
+            ${opciones}
+          </select>
+        `,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Mover y eliminar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#6c757d",
+        reverseButtons: true,
+        preConfirm: () => {
+          const destino = document.getElementById("destinoAlmacen")?.value;
+          if (!destino) {
+            Swal.showValidationMessage("Seleccione un almacén de destino");
+            return false;
+          }
+          return Number(destino);
+        }
+      });
+
+      if (!result.isConfirmed) return;
+
+      const destinoId = result.value;
+
+      try {
+        // Move all inventory records to destination warehouse
+        for (const inv of invDelAlmacen) {
+          await actualizarInventarioAPI(inv.id_inventario, {
+            id_producto: inv.id_producto,
+            id_almacen: destinoId,
+            stock: inv.stock,
+            min_stock: inv.min_stock
+          });
+        }
+
+        // Delete the warehouse
+        await eliminarAlmacenAPI(idAlmacen);
+        almacenesCache = await getAlmacenesAPI();
+        renderTabla(inputBuscar ? inputBuscar.value : "");
+        await Swal.fire({
+          icon: "success",
+          title: "Completado",
+          text: `Se movieron ${invDelAlmacen.length} registro(s) de inventario y se eliminó el almacén.`,
+          confirmButtonText: "Aceptar"
+        });
+      } catch (err) {
+        await Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: `Error al mover inventario: ${err.message}`,
+          confirmButtonText: "Aceptar"
+        });
+      }
+      return;
+    }
+
+    // CASE 3: No inventory — normal delete confirmation
     const result = await Swal.fire({
       icon: "warning",
       title: "¿Estás seguro?",
-      text: `¿Eliminar el almacén ${folio}?\n\nTambién se eliminarán todos los inventarios asociados a este almacén.`,
+      text: `¿Eliminar el almacén ${folio}?`,
       showCancelButton: true,
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
@@ -371,7 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
       almacenesCache = await getAlmacenesAPI();
       renderTabla(inputBuscar ? inputBuscar.value : "");
     } catch (err) {
-      Swal.fire({ icon: "error", title: "Error", text: `Error al eliminar: ${err.message}`, confirmButtonText: "Aceptar" });
+      await Swal.fire({ icon: "error", title: "Error", text: `Error al eliminar: ${err.message}`, confirmButtonText: "Aceptar" });
     }
   }
 
