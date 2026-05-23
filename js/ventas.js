@@ -471,7 +471,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (detalleVentaTemporal.length === 0) {
       tbodyDetalleVenta.innerHTML = `
         <tr>
-          <td colspan="7" class="text-muted">No hay productos agregados.</td>
+          <td colspan="8" class="text-muted">No hay productos agregados.</td>
         </tr>
       `;
       calcularTotalTemporal();
@@ -507,6 +507,12 @@ return `
               >
             </td>
             <td class="detalle-precio-iva">$${money(precioConIVA)}</td>
+            <td>
+              ${item.moneda_original === "USD"
+                ? `<span class="text-info font-weight-bold" title="T.C.: ${item.tipo_cambio_usado || "—"}">USD → MXN</span>`
+                : `<span class="text-success font-weight-bold">MXN</span>`
+              }
+            </td>
             <td class="detalle-importe">$${money(importe)}</td>
           <td>
             <button type="button" class="btn btn-danger btn-sm btn-quitar-detalle">
@@ -832,6 +838,8 @@ return `
       if (data && data.venta) {
         inpTipoCambio.value = data.venta;
         tipoCambio = Number(data.venta);
+        const event = new Event("input", { bubbles: true });
+        inpTipoCambio.dispatchEvent(event);
       }
     } catch (error) {
       console.error("Error fetching exchange rate:", error);
@@ -845,7 +853,6 @@ return `
   function populatePrecioDropdown(producto) {
     if (!inpPrecioVenta) return;
     inpPrecioVenta.innerHTML = "";
-    inpPrecioVenta.disabled = false;
 
     const moneda = (producto.moneda || "MXN").toUpperCase();
     const costo = Number(producto.costo || 0);
@@ -1048,7 +1055,9 @@ return `
             ? (almacen.nombre || almacen.nombre_almacen || `Almacén ${almacen.id_almacen}`)
             : (d.nombre_almacen || null),
           cantidad_vendida: Number(d.cantidad_vendida),
-          precio_venta: Number(d.precio_venta)
+          precio_venta: Number(d.precio_venta),
+          moneda_original: d.moneda_original || "MXN",
+          tipo_cambio_usado: d.tipo_cambio_usado || null
         };
       });
 
@@ -1276,6 +1285,8 @@ return `
           Number(detalleVentaTemporal[idxExistente].cantidad_vendida) + (Number.isFinite(cantidad) ? cantidad : 0);
         detalleVentaTemporal[idxExistente].precio_venta =
           Number.isFinite(precioFinal) ? precioFinal : 0;
+        detalleVentaTemporal[idxExistente].moneda_original = monedaSeleccionada === "USD" ? "USD" : "MXN";
+        detalleVentaTemporal[idxExistente].tipo_cambio_usado = monedaSeleccionada === "USD" ? (tipoCambio || Number(inpTipoCambio.value) || null) : null;
       } else {
         detalleVentaTemporal.push({
           id_producto: Number.isFinite(idProducto) ? idProducto : 0,
@@ -1283,7 +1294,9 @@ return `
           id_almacen: Number.isFinite(idAlmacen) ? idAlmacen : 0,
           nombre_almacen: nombreAlmacen,
           cantidad_vendida: Number.isFinite(cantidad) ? cantidad : 0,
-          precio_venta: Number.isFinite(precioFinal) ? precioFinal : 0
+          precio_venta: Number.isFinite(precioFinal) ? precioFinal : 0,
+          moneda_original: monedaSeleccionada === "USD" ? "USD" : "MXN",
+          tipo_cambio_usado: monedaSeleccionada === "USD" ? (tipoCambio || Number(inpTipoCambio.value) || null) : null
         });
       }
 
@@ -1411,6 +1424,20 @@ return `
           }
         }
       }
+
+      let huboCambio = false;
+      detalleVentaTemporal.forEach((item) => {
+        if (item.moneda_original === "USD" && item.tipo_cambio_usado) {
+          const tasa = tipoCambio || Number(inpTipoCambio.value) || 0;
+          if (tasa > 0) {
+            const precioOriginal = item.precio_venta / item.tipo_cambio_usado;
+            item.precio_venta = Number((precioOriginal * tasa).toFixed(2));
+            item.tipo_cambio_usado = tasa;
+            huboCambio = true;
+          }
+        }
+      });
+      if (huboCambio) renderDetalleTemporal();
     });
   }
 
