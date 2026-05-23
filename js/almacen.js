@@ -33,6 +33,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let categoriasTemporales = [];
   let categoriasCache = [];
   let almacenesCache = [];
+  let productosCache = [];
+  let productoFiltroId = null;
+  let almacenesPorProducto = null;
+
+  const inputBuscarProducto = document.getElementById("buscarProductoAlmacen");
+  const btnLimpiarFiltro = document.getElementById("btnLimpiarFiltroProducto");
 
   const norm = (v) => (v ?? "").toString().trim();
 
@@ -116,6 +122,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  async function getProductosAPI() {
+    const res = await apiFetch("/api/productos/", { auth: false });
+    return Array.isArray(res.data) ? res.data : [];
+  }
+
+  async function getAlmacenesPorProductoAPI(idProducto) {
+    const res = await apiFetch(`/api/almacenes/por-producto/${idProducto}`, { auth: false });
+    return Array.isArray(res.data) ? res.data : [];
+  }
+
   async function getCategoriasAPI() {
     const res = await apiFetch("/api/categorias/", { auth: false });
     return Array.isArray(res.data) ? res.data : [];
@@ -187,18 +203,31 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!tbody) return;
 
     const f = norm(filtro).toLowerCase();
+    const thStock = document.getElementById("thStock");
+    const hayFiltroProducto = almacenesPorProducto !== null;
+    const colspan = hayFiltroProducto ? 4 : 3;
+
+    const fuente = almacenesPorProducto ?? almacenesCache;
 
     const lista = !f
-      ? almacenesCache
-      : almacenesCache.filter((a) => {
+      ? fuente
+      : fuente.filter((a) => {
           const texto = `${a.folio || ""} ${a.nombre || ""}`.toLowerCase();
           return texto.includes(f);
         });
 
+    if (thStock) {
+      thStock.style.display = hayFiltroProducto ? "" : "none";
+    }
+
     if (lista.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="3" class="text-center text-muted">Sin almacenes registrados.</td>
+          <td colspan="${colspan}" class="text-center text-muted">${
+            hayFiltroProducto
+              ? "Ningún almacén tiene inventario de este producto."
+              : "Sin almacenes registrados."
+          }</td>
         </tr>
       `;
       return;
@@ -208,6 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <tr data-id="${a.id_almacen}">
         <td>${a.folio || ""}</td>
         <td>${a.nombre || ""}</td>
+        ${hayFiltroProducto ? `<td class="font-weight-bold">${a.stock ?? a.cantidad ?? 0}</td>` : ""}
         <td>
           <button type="button" class="btn btn-info btn-circle btn-sm btn-detalle" title="Ver detalle">
             <i class="fas fa-eye"></i>
@@ -580,6 +610,109 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Product search dropdown
+  let timeoutBusquedaProducto = null;
+
+  function crearDropdownProductosAlmacen() {
+    let dropdown = document.getElementById("dropdownProductosAlmacen");
+    if (!dropdown) {
+      dropdown = document.createElement("div");
+      dropdown.id = "dropdownProductosAlmacen";
+      dropdown.className = "dropdown-menu w-100 show";
+      dropdown.style.position = "absolute";
+      dropdown.style.zIndex = "1000";
+      dropdown.style.maxHeight = "300px";
+      dropdown.style.overflowY = "auto";
+      dropdown.style.display = "none";
+      const parent = inputBuscarProducto.parentNode;
+      if (getComputedStyle(parent).position === "static") {
+        parent.style.position = "relative";
+      }
+      parent.appendChild(dropdown);
+    }
+    return dropdown;
+  }
+
+  if (inputBuscarProducto) {
+    inputBuscarProducto.addEventListener("input", () => {
+      const valor = inputBuscarProducto.value.trim();
+      clearTimeout(timeoutBusquedaProducto);
+
+      if (!valor || valor.length < 1) {
+        const dropdown = document.getElementById("dropdownProductosAlmacen");
+        if (dropdown) dropdown.style.display = "none";
+        return;
+      }
+
+      timeoutBusquedaProducto = setTimeout(() => {
+        const filtrados = productosCache.filter(p => {
+          const texto = `${p.folio || ""} ${p.descripcion || p.nombre_producto || ""}`.toLowerCase();
+          return texto.includes(valor.toLowerCase());
+        });
+
+        const dropdown = crearDropdownProductosAlmacen();
+        dropdown.innerHTML = "";
+
+        if (filtrados.length === 0) {
+          dropdown.innerHTML = '<div class="dropdown-item text-muted">No se encontraron productos</div>';
+          dropdown.style.display = "block";
+          return;
+        }
+
+        filtrados.slice(0, 10).forEach(p => {
+          const item = document.createElement("a");
+          item.className = "dropdown-item";
+          item.href = "#";
+          item.style.cursor = "pointer";
+          const nombre = p.descripcion || p.nombre_producto || `Producto ${p.id_producto}`;
+          item.innerHTML = `<strong>${p.folio || ""}</strong> - ${nombre}`;
+          item.setAttribute("data-id", p.id_producto);
+          item.setAttribute("data-label", `${p.folio || ""} - ${nombre}`);
+
+          item.addEventListener("click", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            inputBuscarProducto.value = item.getAttribute("data-label");
+            dropdown.style.display = "none";
+            productoFiltroId = Number(p.id_producto);
+
+            try {
+              const resultado = await getAlmacenesPorProductoAPI(productoFiltroId);
+              almacenesPorProducto = resultado;
+              if (btnLimpiarFiltro) btnLimpiarFiltro.style.display = "";
+              renderTabla(inputBuscar ? inputBuscar.value : "");
+            } catch (err) {
+              console.error("Error al filtrar por producto:", err);
+              await Swal.fire({ icon: "error", title: "Error", text: "Error al consultar almacenes por producto", confirmButtonText: "Aceptar" });
+            }
+          });
+
+          dropdown.appendChild(item);
+        });
+
+        dropdown.style.display = "block";
+      }, 300);
+    });
+
+    document.addEventListener("click", (e) => {
+      const dropdown = document.getElementById("dropdownProductosAlmacen");
+      if (dropdown && !inputBuscarProducto.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = "none";
+      }
+    });
+  }
+
+  // Limpiar filtro de producto
+  if (btnLimpiarFiltro) {
+    btnLimpiarFiltro.addEventListener("click", () => {
+      productoFiltroId = null;
+      almacenesPorProducto = null;
+      inputBuscarProducto.value = "";
+      btnLimpiarFiltro.style.display = "none";
+      renderTabla(inputBuscar ? inputBuscar.value : "");
+    });
+  }
+
   $(modalRegistro).on("show.bs.modal", function () {
     if (modo !== "edit") {
       resetFormularioAlmacen();
@@ -612,6 +745,12 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarCategoriasSelect();
   } catch (err) {
     console.error("Error al cargar categorías:", err.message);
+  }
+
+  try {
+    productosCache = await getProductosAPI();
+  } catch (err) {
+    console.error("Error al cargar productos:", err.message);
   }
 
   renderCategoriasTemporales();

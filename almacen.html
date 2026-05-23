@@ -207,11 +207,19 @@
                     <h1 class="h3 mb-4 text-gray-800">Almacén</h1>
                     <div class="card shadow mb-4">
     
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Directorio de almacenes</h6>
+    <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap">
+        <div class="d-flex align-items-center flex-wrap">
+            <h6 class="m-0 font-weight-bold text-primary mr-3">Directorio de almacenes</h6>
+            <div style="position: relative; width: 220px;" class="mr-2">
+                <input type="text" id="buscarProductoAlmacen" class="form-control form-control-sm" placeholder="Buscar por producto..." autocomplete="off">
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" id="btnLimpiarFiltroProducto" style="display:none;">
+                <i class="fas fa-times mr-1"></i>Limpiar
+            </button>
+        </div>
         <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalNuevoAlmacen">
-    <i class="fas fa-plus fa-sm text-white-50"></i> Agregar Nuevo Almacén
-</a>
+            <i class="fas fa-plus fa-sm text-white-50"></i> Agregar Nuevo Almacén
+        </a>
     </div>
 
     <div class="card-body">
@@ -221,6 +229,7 @@
                     <tr>
                         <th>Folio</th>
                         <th>Nombre</th>
+                        <th id="thStock" style="display:none;">Stock</th>
                         <th style="width: 100px;">Acciones</th>
                     </tr>
                 </thead>
