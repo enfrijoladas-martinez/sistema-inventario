@@ -261,6 +261,29 @@ document.addEventListener("DOMContentLoaded", () => {
     return encontrado ? encontrado.nombre : null;
   }
 
+  function resolverClientePorId(idCliente) {
+    if (!idCliente) return null;
+    const encontrado = clientesCache.find((c) => Number(c.id_cliente) === Number(idCliente));
+    return encontrado ? `${encontrado.nombre || ""} ${encontrado.apellido_paterno || ""}`.trim() : null;
+  }
+
+  function resolverClientesVentas() {
+    ventasCache.forEach(v => {
+      if (typeof v.cliente === 'string' && v.cliente) return;
+
+      if (v.cliente && typeof v.cliente === 'object') {
+        v.cliente = [v.cliente.nombre, v.cliente.apellido_paterno].filter(Boolean).join(' ');
+        return;
+      }
+
+      const clienteId = v.id_cliente || v.cliente_id || v.fk_cliente || v.idCliente;
+      if (clienteId) {
+        const encontrado = resolverClientePorId(Number(clienteId));
+        if (encontrado) v.cliente = encontrado;
+      }
+    });
+  }
+
   function resolverMunicipioPorId(idMunicipio) {
     if (!idMunicipio) return null;
     const encontrado = municipiosCache.find((m) => Number(m.id_municipio) === Number(idMunicipio));
@@ -277,8 +300,10 @@ document.addEventListener("DOMContentLoaded", () => {
       id_municipio: v.id_municipio ? Number(v.id_municipio) : null,
       estado: v.estado ?? v.nombre_estado ?? resolverEstadoPorId(v.id_estado) ?? null,
       municipio: v.municipio ?? v.nombre_municipio ?? resolverMunicipioPorId(v.id_municipio) ?? null,
-      cliente: v.cliente ?? (`${v.nombre || ""} ${v.apellido_paterno || ""}`.trim() || null),
-      id_cliente: v.id_cliente ? Number(v.id_cliente) : null
+      cliente: v.cliente ?? null,
+      id_cliente: v.id_cliente ? Number(v.id_cliente) : 
+                (v.cliente_id ? Number(v.cliente_id) : 
+                (v.id_cliente_venta ? Number(v.id_cliente_venta) : null))
     };
   }
 
@@ -605,6 +630,7 @@ return `
   }
 
   function renderTabla(filtro = "") {
+    resolverClientesVentas();
     const f = norm(filtro).toLowerCase();
 
     const lista = !f
@@ -863,6 +889,23 @@ return `
   async function refrescarVentas() {
     const ventas = await getVentasAPI();
     ventasCache = ventas.map(normalizarVenta);
+
+    const pendientes = ventasCache.filter(v => !v.cliente && !v.id_cliente);
+    if (pendientes.length > 0) {
+      const resultados = await Promise.allSettled(
+        pendientes.map(v => getVentaAPI(v.id_venta))
+      );
+      resultados.forEach((res, i) => {
+        if (res.status === 'fulfilled' && res.value) {
+          const detalle = normalizarVenta(res.value);
+          const original = ventasCache.find(v => v.id_venta === pendientes[i].id_venta);
+          if (original) {
+            original.cliente = detalle.cliente || original.cliente;
+            original.id_cliente = detalle.id_cliente || original.id_cliente;
+          }
+        }
+      });
+    }
   }
 
   async function fetchExchangeRate() {
@@ -887,7 +930,7 @@ return `
   }
 
   function populatePrecioDropdown(producto) {
-    if (!inpPrecioVenta) return;
+    if (!inpPrecioVenta || !producto) return;
     inpPrecioVenta.innerHTML = "";
 
     const moneda = (producto.moneda || "MXN").toUpperCase();
@@ -983,12 +1026,14 @@ return `
 
       const detalleFolioVenta = document.getElementById("detalleFolioVenta");
       const detalleTotalVenta = document.getElementById("detalleTotalVenta");
+      const detalleClienteVenta = document.getElementById("detalleClienteVenta");
       const detalleEstadoVenta = document.getElementById("detalleEstadoVenta");
       const detalleMunicipioVenta = document.getElementById("detalleMunicipioVenta");
       const detalleItemsVenta = document.getElementById("detalleItemsVenta");
 
       detalleFolioVenta.textContent = ventaNormalizada.folio || "";
       detalleTotalVenta.textContent = money(ventaNormalizada.precio_venta_final);
+      detalleClienteVenta.textContent = ventaNormalizada.cliente || "";
       detalleEstadoVenta.textContent = ventaNormalizada.estado || "";
       detalleMunicipioVenta.textContent = ventaNormalizada.municipio || "";
 
@@ -1200,8 +1245,8 @@ return `
               e.stopPropagation();
               productoSeleccionadoId = Number(p.id_producto);
               selectProductoVenta.value = `${p.folio || ""} - ${nombre}`;
-              const prodCompleto = await getProductoAPI(p.id_producto);
-              productoSeleccionadoFull = prodCompleto || p;
+              const prodEnCache = productosCache.find(pc => Number(pc.id_producto) === Number(p.id_producto));
+              productoSeleccionadoFull = prodEnCache || p;
               populatePrecioDropdown(productoSeleccionadoFull);
               dropdown.style.display = "none";
               
@@ -1734,10 +1779,10 @@ return `
 
   (async function init() {
     try {
-      await Promise.all([refrescarCatalogos(), refrescarVentas(), cargarClientes()]);
+      await Promise.all([refrescarCatalogos(), cargarClientes(), cargarEstados()]);
+      await refrescarVentas();
       cargarProductos();
       cargarAlmacenes();
-      await cargarEstados();
       renderTabla();
       resetFormulario();
     } catch (error) {

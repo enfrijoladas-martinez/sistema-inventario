@@ -40,9 +40,15 @@ function init() {
     const paginaActual = obtenerPaginaActual();
     const rol = (usuario.rol || "").toLowerCase();
 
-    if (rol === "empleado" && !PAGINAS_EMPLEADO.includes(paginaActual)) {
-        window.location.href = "index.html";
-        return;
+    if (rol === "empleado") {
+        if (!PAGINAS_EMPLEADO.includes(paginaActual)) {
+            window.location.href = "index.html";
+            return;
+        }
+        ocultarMenusAdmin();
+        document.querySelectorAll('a.dropdown-item[href="usuarios.html"]').forEach(el => {
+            el.style.display = "none";
+        });
     }
 
     actualizarNombreUsuario(usuario);

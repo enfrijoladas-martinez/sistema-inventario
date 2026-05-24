@@ -263,7 +263,7 @@ function renderizarProductos(lista) {
             <tr>
                 <td>${producto.clave || producto.folio || ""}</td>
                 <td>${producto.descripcion || ""}</td>
-                <td>${formatoMoneda(producto.costo || 0)}</td>
+                <td>${formatoMoneda(producto.costo || 0)} ${producto.moneda || "MXN"}</td>
                 <td>${obtenerCategoriasTexto(producto)}</td>
                 <td>
                       <div class="d-flex justify-content-center align-items-center flex-nowrap">
@@ -454,7 +454,7 @@ async function verDetalleProducto(idProducto) {
 
         setText("detalleCodigo", producto.clave || producto.folio || "");
         setText("detalleDescripcion", producto.descripcion || "");
-        setText("detalleCosto", formatoMoneda(producto.costo ?? 0));
+        setText("detalleCosto", `${formatoMoneda(producto.costo ?? 0)} ${producto.moneda || "MXN"}`);
         setText("detalleMoneda", producto.moneda || "MXN");
         const precios = Array.isArray(producto.precios) ? producto.precios : [];
         const contPrecios = document.getElementById("detallePrecios");
