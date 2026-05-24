@@ -39,9 +39,11 @@ function init() {
 
     const paginaActual = obtenerPaginaActual();
     const rol = (usuario.rol || "").toLowerCase();
-    
-    // Si queremos que el rol empleado tenga acceso a todo igual que el administrador
-    // Eliminamos las redirecciones y ocultamiento de menús
+
+    if (rol === "empleado" && !PAGINAS_EMPLEADO.includes(paginaActual)) {
+        window.location.href = "index.html";
+        return;
+    }
 
     actualizarNombreUsuario(usuario);
 }
