@@ -901,20 +901,20 @@ return `
           const opt = document.createElement("option");
           opt.value = convertido;
           opt.setAttribute("data-moneda", "MXN");
-          opt.textContent = `$${money(convertido)} MXN (${margen}% margen, convertido de $${money(precioCalculado)} USD)`;
+          opt.textContent = `$${money(convertido)} MXN (convertido de $${money(precioCalculado)} USD)`;
           inpPrecioVenta.appendChild(opt);
         }
         const optUsd = document.createElement("option");
         optUsd.value = Number(precioCalculado.toFixed(2));
         optUsd.setAttribute("data-moneda", "USD");
-        optUsd.textContent = `$${money(precioCalculado)} USD (${margen}% margen)`;
+        optUsd.textContent = `$${money(precioCalculado)} USD`;
         inpPrecioVenta.appendChild(optUsd);
       } else {
         precioCalculado = Number(precioCalculado.toFixed(2));
         const opt = document.createElement("option");
         opt.value = precioCalculado;
         opt.setAttribute("data-moneda", "MXN");
-        opt.textContent = `$${money(precioCalculado)} MXN (${margen}% margen)`;
+        opt.textContent = `$${money(precioCalculado)} MXN`;
         inpPrecioVenta.appendChild(opt);
       }
     });
