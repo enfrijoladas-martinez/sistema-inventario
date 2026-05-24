@@ -399,9 +399,13 @@ document.addEventListener("DOMContentLoaded", () => {
       // proceed assuming no inventory
     }
 
-    const invDelAlmacen = inventarios.filter(
-      (inv) => Number(inv.id_almacen) === Number(idAlmacen)
-    );
+    const invDelAlmacen = inventarios
+      .filter((inv) => Number(inv.id_almacen) === Number(idAlmacen))
+      .map((inv) => ({
+        ...inv,
+        stock: inv.stock ?? inv.cantidad ?? 0,
+        min_stock: inv.min_stock ?? inv.stock_minimo ?? 0
+      }));
     const otrosAlmacenes = almacenesCache.filter(
       (a) => Number(a.id_almacen) !== Number(idAlmacen)
     );
@@ -453,6 +457,26 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!result.isConfirmed) return;
 
       const destinoId = result.value;
+      const destinoAlmacen = otrosAlmacenes.find(a => Number(a.id_almacen) === destinoId);
+      const destinoNombre = destinoAlmacen ? (destinoAlmacen.nombre || destinoAlmacen.folio || "Destino") : "Destino";
+
+      const confirmar = await Swal.fire({
+        title: "¿Confirmar movimiento?",
+        html: `
+          <p>Se moverán <strong>${invDelAlmacen.length} registro(s)</strong> de inventario</p>
+          <p>Desde: <strong>${folio}</strong></p>
+          <p>Hacia: <strong>${destinoNombre}</strong></p>
+          <p class="text-warning mt-3 mb-0">Luego se eliminará el almacén origen.</p>
+        `,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Sí, mover y eliminar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#d33",
+        reverseButtons: true
+      });
+
+      if (!confirmar.isConfirmed) return;
 
       try {
         // Move all inventory records to destination warehouse
