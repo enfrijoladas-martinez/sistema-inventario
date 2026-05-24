@@ -888,34 +888,32 @@ return `
     inpPrecioVenta.innerHTML = "";
 
     const moneda = (producto.moneda || "MXN").toUpperCase();
-    const costo = Number(producto.costo || 0);
-    const margenes = Array.isArray(producto.margenes) ? producto.margenes : [0];
+    const precios = Array.isArray(producto.precios) ? producto.precios : [producto.costo ?? producto.precio ?? 0];
 
-    margenes.forEach((margen, index) => {
+    precios.forEach((precio, index) => {
       const etiqueta = `Precio ${index + 1}`;
-      let precioCalculado = costo * (1 + margen / 100);
+      const precioVal = Number(precio) || 0;
 
       if (moneda === "USD") {
         const tasa = tipoCambio || Number(inpTipoCambio.value) || 0;
         if (tasa > 0) {
-          const convertido = Number((precioCalculado * tasa).toFixed(2));
+          const convertido = Number((precioVal * tasa).toFixed(2));
           const opt = document.createElement("option");
           opt.value = convertido;
           opt.setAttribute("data-moneda", "MXN");
-          opt.textContent = `${etiqueta}: $${money(convertido)} MXN (convertido de $${money(precioCalculado)} USD)`;
+          opt.textContent = `${etiqueta}: $${money(convertido)} MXN (convertido de $${money(precioVal)} USD)`;
           inpPrecioVenta.appendChild(opt);
         }
         const optUsd = document.createElement("option");
-        optUsd.value = Number(precioCalculado.toFixed(2));
+        optUsd.value = Number(precioVal.toFixed(2));
         optUsd.setAttribute("data-moneda", "USD");
-        optUsd.textContent = `${etiqueta}: $${money(precioCalculado)} USD`;
+        optUsd.textContent = `${etiqueta}: $${money(precioVal)} USD`;
         inpPrecioVenta.appendChild(optUsd);
       } else {
-        precioCalculado = Number(precioCalculado.toFixed(2));
         const opt = document.createElement("option");
-        opt.value = precioCalculado;
+        opt.value = Number(precioVal.toFixed(2));
         opt.setAttribute("data-moneda", "MXN");
-        opt.textContent = `${etiqueta}: $${money(precioCalculado)} MXN`;
+        opt.textContent = `${etiqueta}: $${money(precioVal)} MXN`;
         inpPrecioVenta.appendChild(opt);
       }
     });
@@ -1191,7 +1189,7 @@ return `
             item.setAttribute("data-folio", p.folio || "");
             item.setAttribute("data-nombre", nombre);
             item.setAttribute("data-costo", p.costo || 0);
-            item.setAttribute("data-margenes", JSON.stringify(p.margenes || [0]));
+            item.setAttribute("data-precios", JSON.stringify(p.precios || [p.costo || 0]));
             item.setAttribute("data-moneda", p.moneda || "MXN");
 
             item.addEventListener("click", async (e) => {
@@ -1199,7 +1197,8 @@ return `
               e.stopPropagation();
               productoSeleccionadoId = Number(p.id_producto);
               selectProductoVenta.value = `${p.folio || ""} - ${nombre}`;
-              populatePrecioDropdown(p);
+              const prodCompleto = await getProductoAPI(p.id_producto);
+              populatePrecioDropdown(prodCompleto || p);
               dropdown.style.display = "none";
               
               // Load warehouses that have stock for this product
@@ -1544,7 +1543,7 @@ return `
                 id_producto: Number(item.getAttribute("data-id")),
                 folio: item.getAttribute("data-folio"),
                 costo: Number(item.getAttribute("data-costo")),
-                margenes: JSON.parse(item.getAttribute("data-margenes") || "[0]"),
+                precios: JSON.parse(item.getAttribute("data-precios") || "[0]"),
                 moneda: item.getAttribute("data-moneda"),
                 descripcion: item.getAttribute("data-nombre")
               };

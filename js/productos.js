@@ -454,17 +454,15 @@ async function verDetalleProducto(idProducto) {
 
         setText("detalleCodigo", producto.clave || producto.folio || "");
         setText("detalleDescripcion", producto.descripcion || "");
-        setText("detalleCosto", formatoMoneda(producto.costo || 0));
+        setText("detalleCosto", formatoMoneda(producto.costo ?? 0));
         setText("detalleMoneda", producto.moneda || "MXN");
-        const costo = Number(producto.costo || 0);
-        const margenes = Array.isArray(producto.margenes) ? producto.margenes : [];
+        const precios = Array.isArray(producto.precios) ? producto.precios : [];
         const contPrecios = document.getElementById("detallePrecios");
         if (contPrecios) {
-            if (margenes.length > 0 && costo > 0) {
-                contPrecios.innerHTML = margenes.map((m, i) => {
-                    const precio = costo * (1 + m / 100);
-                    return `<div><strong>Precio ${i + 1}:</strong> ${formatoMoneda(precio)} (${m !== null ? m + '%' : '—'})</div>`;
-                }).join("");
+            if (precios.length > 0) {
+                contPrecios.innerHTML = precios.map((p, i) =>
+                    `<div><strong>Precio ${i + 1}:</strong> ${formatoMoneda(p)}</div>`
+                ).join("");
             } else {
                 contPrecios.innerHTML = '<span class="text-muted">Sin precios configurados</span>';
             }
