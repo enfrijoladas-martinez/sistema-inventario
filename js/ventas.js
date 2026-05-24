@@ -1245,8 +1245,13 @@ return `
               e.stopPropagation();
               productoSeleccionadoId = Number(p.id_producto);
               selectProductoVenta.value = `${p.folio || ""} - ${nombre}`;
-              const prodEnCache = productosCache.find(pc => Number(pc.id_producto) === Number(p.id_producto));
-              productoSeleccionadoFull = prodEnCache || p;
+
+              try {
+                const prodRes = await apiFetch(`/productos/${p.id_producto}`, { auth: false });
+                productoSeleccionadoFull = prodRes.data || p;
+              } catch {
+                productoSeleccionadoFull = p;
+              }
               populatePrecioDropdown(productoSeleccionadoFull);
               dropdown.style.display = "none";
               
