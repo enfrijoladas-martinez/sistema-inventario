@@ -552,15 +552,7 @@ return `
                 value="${Number(item.cantidad_vendida) || 0}"
               >
             </td>
-            <td>
-              <input
-                type="number"
-                step="0.01"
-                class="form-control form-control-sm detalle-precio"
-                value="${precioBase}"
-                readonly
-              >
-            </td>
+            <td class="detalle-precio align-middle font-weight-bold">$${money(precioBase)}</td>
             <td class="detalle-precio-iva">$${money(precioConIVA)}</td>
             <td>
               ${item.moneda_original === "USD"
@@ -606,7 +598,6 @@ return `
 
     const selectAlmacen = tr.querySelector(".detalle-almacen");
     const inputCantidad = tr.querySelector(".detalle-cantidad");
-    const inputPrecio = tr.querySelector(".detalle-precio");
 
     if (selectAlmacen) {
       item.id_almacen = Number(selectAlmacen.value) || null;
@@ -620,10 +611,6 @@ return `
 
     if (inputCantidad) {
       item.cantidad_vendida = Number(inputCantidad.value) || 0;
-    }
-
-    if (inputPrecio) {
-      item.precio_venta = Number(inputPrecio.value) || 0;
     }
 
     recalcularImporteFila(tr);
