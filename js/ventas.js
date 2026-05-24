@@ -891,7 +891,8 @@ return `
     const costo = Number(producto.costo || 0);
     const margenes = Array.isArray(producto.margenes) ? producto.margenes : [0];
 
-    margenes.forEach((margen) => {
+    margenes.forEach((margen, index) => {
+      const etiqueta = `Precio ${index + 1}`;
       let precioCalculado = costo * (1 + margen / 100);
 
       if (moneda === "USD") {
@@ -901,23 +902,25 @@ return `
           const opt = document.createElement("option");
           opt.value = convertido;
           opt.setAttribute("data-moneda", "MXN");
-          opt.textContent = `$${money(convertido)} MXN (convertido de $${money(precioCalculado)} USD)`;
+          opt.textContent = `${etiqueta}: $${money(convertido)} MXN (convertido de $${money(precioCalculado)} USD)`;
           inpPrecioVenta.appendChild(opt);
         }
         const optUsd = document.createElement("option");
         optUsd.value = Number(precioCalculado.toFixed(2));
         optUsd.setAttribute("data-moneda", "USD");
-        optUsd.textContent = `$${money(precioCalculado)} USD`;
+        optUsd.textContent = `${etiqueta}: $${money(precioCalculado)} USD`;
         inpPrecioVenta.appendChild(optUsd);
       } else {
         precioCalculado = Number(precioCalculado.toFixed(2));
         const opt = document.createElement("option");
         opt.value = precioCalculado;
         opt.setAttribute("data-moneda", "MXN");
-        opt.textContent = `$${money(precioCalculado)} MXN`;
+        opt.textContent = `${etiqueta}: $${money(precioCalculado)} MXN`;
         inpPrecioVenta.appendChild(opt);
       }
     });
+
+    inpPrecioVenta.disabled = false;
 
     if (inpPrecioVenta.options.length > 0) {
       inpPrecioVenta.selectedIndex = 0;
