@@ -141,8 +141,6 @@
 
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-                        <a href="reportes.html" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-                                class="fas fa-download fa-sm text-white-50"></i> Generar Reporte</a>
                     </div>
 
                     <div class="row">
@@ -228,110 +226,80 @@
 
                     </div>
 
-                    <!-- GRÁFICAS DASHBOARD (2 POR FILA) -->
+                    <h1 class="h3 mb-4 text-gray-800">Reportes y Análisis de Ventas</h1>
+
+                    <!-- FILA 1: VENTAS POR PRODUCTO + VENTAS POR LÍNEA -->
                     <div class="row">
 
-                        <div class="col-lg-6 mb-4">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-primary">
-                                            <i class="fas fa-chart-line mr-2"></i>Tendencia Mensual
-                                        </h6>
+                        <div class="col-lg-7 mb-4">
+                            <div class="card border-left-primary shadow h-100">
+                                <div class="card-header py-3 d-flex align-items-center">
+                                    <i class="fas fa-box fa-lg text-primary mr-2"></i>
+                                    <h6 class="m-0 font-weight-bold text-primary">Ventas por Producto</h6>
                                 </div>
                                 <div class="card-body">
-                                    <div style="position: relative; height:220px;">
-                                        <canvas id="chartVentasMensuales"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6 mb-4">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-success">
-                                            <i class="fas fa-box mr-2"></i>Top 5 Productos
-                                        </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div style="position: relative; height:220px;">
-                                        <canvas id="chartTopProductos"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6 mb-4">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-warning">
-                                            <i class="fas fa-tags mr-2"></i>Ventas por Categoría
-                                        </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div style="position: relative; height:220px;">
-                                        <canvas id="chartVentasCategoria"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6 mb-4">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                        <h6 class="m-0 font-weight-bold text-info">
-                                            <i class="fas fa-map-marker-alt mr-2"></i>Ventas por Estado
-                                        </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div style="position: relative; height:220px;">
-                                        <canvas id="chartVentasEstado"></canvas>
+                                    <div style="position: relative; height:250px;">
+                                        <canvas id="chartVentasProducto"></canvas>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-lg-5 mb-4">
-                            <div class="card shadow h-100">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-success">
-                                        <i class="fas fa-trophy mr-2"></i>Producto más Vendido
-                                    </h6>
+                            <div class="card border-left-warning shadow h-100">
+                                <div class="card-header py-3 d-flex align-items-center">
+                                    <i class="fas fa-tags fa-lg text-warning mr-2"></i>
+                                    <h6 class="m-0 font-weight-bold text-warning">Ventas por Línea</h6>
                                 </div>
-                                <div class="card-body text-center">
-                                    <i class="fas fa-medal fa-4x text-warning mb-3"></i>
-                                    <h4 class="font-weight-bold text-gray-800" id="txtProductoMasVendido">Sin datos</h4>
-                                    <p class="text-muted mb-1">Cantidad vendida:</p>
-                                    <h5 class="font-weight-bold text-success" id="txtCantidadProductoMasVendido">0 unidades</h5>
-                                    <p class="text-muted mb-1 mt-3">Importe generado:</p>
-                                    <h5 class="font-weight-bold text-primary" id="txtImporteProductoMasVendido">$0.00</h5>
+                                <div class="card-body">
+                                    <div style="position: relative; height:250px;">
+                                        <canvas id="chartVentasLinea"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- FILA 2: VENTAS POR CLIENTE + MÁS VENDIDOS POR CATEGORÍA -->
+                    <div class="row">
+
+                        <div class="col-lg-5 mb-4">
+                            <div class="card border-left-info shadow h-100">
+                                <div class="card-header py-3 d-flex align-items-center">
+                                    <i class="fas fa-users fa-lg text-info mr-2"></i>
+                                    <h6 class="m-0 font-weight-bold text-info">Ventas por Cliente</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div style="position: relative; height:250px;">
+                                        <canvas id="chartVentasCliente"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-lg-7 mb-4">
-                            <div class="card shadow h-100">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-success">
-                                        Ranking de Productos
-                                    </h6>
+                            <div class="card border-left-danger shadow h-100">
+                                <div class="card-header py-3 d-flex align-items-center">
+                                    <i class="fas fa-chart-pie fa-lg text-danger mr-2"></i>
+                                    <h6 class="m-0 font-weight-bold text-danger">Productos más Vendidos por Categoría</h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered table-hover table-sm text-center" id="tablaRankingProductos" width="100%" cellspacing="0">
+                                    <div style="position: relative; height:220px; margin-bottom:16px;">
+                                        <canvas id="chartVendidosCategoria"></canvas>
+                                    </div>
+                                    <div class="table-responsive" style="max-height:180px; overflow-y:auto;">
+                                        <table class="table table-bordered table-hover table-sm text-center" id="tablaVendidosCategoria" width="100%" cellspacing="0">
                                             <thead class="thead-light">
                                                 <tr>
-                                                    <th>#</th>
-                                                    <th>Producto</th>
                                                     <th>Categoría</th>
+                                                    <th>Más vendido</th>
                                                     <th>Cantidad</th>
                                                     <th>Total</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
-                                                    <td colspan="5">Sin datos disponibles</td>
-                                                </tr>
+                                                <tr><td colspan="4">Sin datos disponibles</td></tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -339,7 +307,82 @@
                             </div>
                         </div>
 
-                    </div> </div>
+                    </div>
+
+                    <!-- FILA 3: PRODUCTO MÁS VENDIDO -->
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <div class="card border-left-success shadow h-100">
+                                <div class="card-header py-3 d-flex align-items-center">
+                                    <i class="fas fa-trophy fa-lg text-success mr-2"></i>
+                                    <h6 class="m-0 font-weight-bold text-success">Producto más Vendido</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-lg-2 text-center mb-3 mb-lg-0">
+                                            <i class="fas fa-medal fa-4x text-warning mb-2"></i>
+                                            <h4 class="font-weight-bold text-gray-800" id="txtProductoMasVendido">Sin datos</h4>
+                                            <p class="text-muted small mb-0">Cantidad vendida:</p>
+                                            <h5 class="font-weight-bold text-success" id="txtCantidadProductoMasVendido">0</h5>
+                                            <p class="text-muted small mb-0 mt-1">Importe:</p>
+                                            <h5 class="font-weight-bold text-primary" id="txtImporteProductoMasVendido">$0.00</h5>
+                                        </div>
+                                        <div class="col-lg-10">
+                                            <h6 class="font-weight-bold text-success mb-2">Ranking de Productos</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-hover table-sm text-center" id="tablaRankingProductos" width="100%" cellspacing="0">
+                                                    <thead class="thead-light">
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Producto</th>
+                                                            <th>Categoría</th>
+                                                            <th>Cantidad Vendida</th>
+                                                            <th>Total Vendido</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr><td colspan="5">Sin datos disponibles</td></tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FILA 4: STOCK MÍNIMO -->
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <div class="card border-left-danger shadow h-100">
+                                <div class="card-header py-3 d-flex align-items-center">
+                                    <i class="fas fa-exclamation-triangle fa-lg text-danger mr-2"></i>
+                                    <h6 class="m-0 font-weight-bold text-danger">Productos con Stock por debajo del Mínimo</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover table-sm text-center" id="tablaStockMinimo" width="100%" cellspacing="0">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Folio</th>
+                                                    <th>Producto</th>
+                                                    <th>Almacén</th>
+                                                    <th>Stock</th>
+                                                    <th>Mínimo</th>
+                                                    <th>Diferencia</th>
+                                                    <th>Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr><td colspan="7">Cargando datos...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
@@ -394,23 +437,31 @@
     let ventasGlobal = [];
     let productosGlobal = [];
     let detalleVentasGlobal = [];
-    let datosExcelGlobal = [];
-    let chartVentasMensuales = null;
-    let chartTopProductos = null;
-    let chartVentasCategoria = null;
-    let chartVentasEstado = null;
+    let chartVentasProducto = null;
+    let chartVentasLinea = null;
+    let chartVentasCliente = null;
+    let chartVendidosCategoria = null;
 
     document.addEventListener("DOMContentLoaded", () => {
         cargarReportes();
     });
 
-    async function obtenerDatos(endpoint) {
+    async function obtenerDatos(endpoint, params = {}) {
         try {
-            const token = localStorage.getItem("token");
-            const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-            const response = await fetch(`${API_REPORTES}${endpoint}`, { headers });
+            const queryString = new URLSearchParams(params).toString();
+            const url = queryString ? `${API_REPORTES}${endpoint}?${queryString}` : `${API_REPORTES}${endpoint}`;
+            const headers = { "Content-Type": "application/json" };
+            const response = await fetch(url, { headers });
             const result = await response.json();
             if (!response.ok || result.success === false) {
+                if (response.status === 401 || response.status === 403 || String(result.message).toLowerCase().includes('token')) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Sesión expirada o inválida',
+                        text: 'Tu sesión o token ha expirado. Por favor, cierra sesión y vuelve a entrar para continuar.',
+                        confirmButtonText: 'Entendido'
+                    });
+                }
                 throw new Error(result.message || "Error al obtener datos");
             }
             return result.data;
@@ -420,99 +471,72 @@
         }
     }
 
+    function obtenerMesActualParams() {
+        const ahora = new Date();
+        const anio = ahora.getFullYear();
+        const mes = String(ahora.getMonth() + 1).padStart(2, "0");
+        const ultimoDia = new Date(anio, ahora.getMonth() + 1, 0).getDate();
+        return {
+            fecha_inicio: `${anio}-${mes}-01`,
+            fecha_fin: `${anio}-${mes}-${String(ultimoDia).padStart(2, "0")}`
+        };
+    }
+
     async function cargarReportes() {
-        ventasGlobal = await obtenerDatos("/api/ventas/") || [];
-        productosGlobal = await obtenerDatos("/api/productos/") || [];
-        detalleVentasGlobal = await obtenerDetalleTodasLasVentas(ventasGlobal);
+        const params = obtenerMesActualParams();
+        const dataVentasCliente = await obtenerDatos("/api/reportes/ventas-por-cliente", params) || [];
+        const dataCantidadVendida = await obtenerDatos("/api/reportes/cantidad-vendida", params) || [];
+        const dataTopPorCategoria = await obtenerDatos("/api/reportes/top-por-categoria", params) || [];
+        const dataTopProductos = await obtenerDatos("/api/reportes/top-productos", params) || [];
+        const dataVentasCategoria = await obtenerDatos("/api/reportes/ventas-por-categoria", params) || [];
+        const dataKpis = await obtenerDatos("/api/reportes/kpis", params) || null;
 
-        const ventasPorProducto = agruparVentasPorProducto(detalleVentasGlobal);
-        const ventasPorCategoria = agruparVentasPorLinea(detalleVentasGlobal);
-        const ventasPorEstado = agruparVentasPorEstado(ventasGlobal);
-        const productoMasVendido = ventasPorProducto[0] || null;
-        const categoriaMasVendida = ventasPorCategoria[0] || null;
-        const vendidosPorCategoria = obtenerMasVendidosPorCategoria(detalleVentasGlobal);
-        const ventasMensuales = agruparVentasMensuales(ventasGlobal);
+        const ventasPorProducto = dataCantidadVendida.map(item => ({
+            producto: item.descripcion, cantidad: item.cantidad_vendida, categoria: "Sin categoría", total: 0
+        }));
 
-        actualizarCards({
-            ventas: ventasGlobal,
-            productoMasVendido,
-            lineaMasVendida: categoriaMasVendida,
-            clientePrincipal: ventasPorEstado[0] || null
-        });
+        const ventasPorCliente = dataVentasCliente.map(item => ({
+            cliente: item.cliente, total: parseFloat(item.utilidad_total || 0), ventas: 1
+        }));
 
-        renderChartVentasMensuales(ventasMensuales);
-        renderChartTopProductos(ventasPorProducto.slice(0, 5));
-        renderChartVentasCategoria(ventasPorCategoria);
-        renderChartVentasEstado(ventasPorEstado);
-        renderProductoMasVendido(productoMasVendido, ventasPorProducto);
-    }
+        const vendidosPorCategoria = dataTopPorCategoria.map(item => ({
+            categoria: item.categoria, producto: item.descripcion,
+            cantidad: item.cantidad_vendida, total: parseFloat(item.utilidad || 0)
+        }));
 
-    function filtrarVentasPorFecha(ventas) {
-        const fechaInicio = document.getElementById("fechaInicio")?.value;
-        const fechaFinal = document.getElementById("fechaFinal")?.value;
-        if (!fechaInicio && !fechaFinal) return ventas;
-        return ventas.filter((venta) => {
-            const fechaRaw = venta.fecha_venta || venta.fecha || venta.created_at || venta.fecha_creacion || "";
-            if (!fechaRaw) return true;
-            const fechaVenta = parseFechaDDMMYYYY(fechaRaw);
-            const inicio = fechaInicio ? new Date(`${fechaInicio}T00:00:00`) : null;
-            const fin = fechaFinal ? new Date(`${fechaFinal}T23:59:59`) : null;
-            if (inicio && fechaVenta < inicio) return false;
-            if (fin && fechaVenta > fin) return false;
-            return true;
-        });
-    }
+        const topProductos = dataTopProductos.map(item => ({
+            producto: item.descripcion, categoria: item.categoria,
+            cantidad: item.cantidad_vendida, total: parseFloat(item.utilidad || 0)
+        }));
 
-    function parseFechaDDMMYYYY(fechaStr) {
-        if (!fechaStr) return new Date();
-        const match = fechaStr.match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/);
-        if (match) {
-            const [, dd, mm, yyyy, hh, min, ss] = match;
-            return new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}`);
+        const ventasPorLinea = dataVentasCategoria.map(item => ({
+            categoria: item.categoria, total: parseFloat(item.utilidad_total || 0),
+            cantidad: (item.productos || []).reduce((acc, p) => acc + Number(p.cantidad_vendida), 0)
+        }));
+
+        const productoMasVendido = topProductos[0] || null;
+        const lineaMasVendida = ventasPorLinea[0] || null;
+        const clientePrincipal = ventasPorCliente[0] || null;
+
+        if (dataKpis) {
+            setText("cardTotalVentas", formatoMoneda(dataKpis.total_ventas || 0));
+            setText("cardProductoMasVendido", dataKpis.producto_mas_vendido || "Sin datos");
+            setText("cardClientePrincipal", dataKpis.cliente_principal || "Sin datos");
+            setText("cardLineaMasVendida", dataKpis.categoria_top || "Sin datos");
+        } else {
+            actualizarCards({ ventas: [], productoMasVendido, lineaMasVendida, clientePrincipal });
         }
-        return new Date(fechaStr);
+
+        renderChartVentasProducto(ventasPorProducto);
+        renderChartVentasLinea(ventasPorLinea);
+        renderChartVentasCliente(ventasPorCliente);
+        renderProductoMasVendido(productoMasVendido, topProductos);
+        renderVendidosPorCategoria(vendidosPorCategoria);
+        renderStockMinimo();
     }
 
     function buscarProductoPorId(idProducto) {
         return productosGlobal.find((producto) => String(producto.id_producto) === String(idProducto)) || {};
-    }
-
-    function obtenerCategoriaProducto(producto) {
-        if (producto.categorias && Array.isArray(producto.categorias) && producto.categorias.length > 0) {
-            return producto.categorias.map((cat) => cat.nombre).join(", ");
-        }
-        return "Sin categoría";
-    }
-
-    async function obtenerDetalleTodasLasVentas(ventas) {
-        const detallesFinales = [];
-        for (const venta of ventas) {
-            const ventaDetalle = await obtenerDatos(`/api/ventas/${venta.id_venta}`);
-            if (!ventaDetalle) continue;
-            const detalle = ventaDetalle.detalle || [];
-            detalle.forEach((item) => {
-                const producto = buscarProductoPorId(item.id_producto);
-                const categoria = obtenerCategoriaProducto(producto);
-                const cantidad = Number(item.cantidad_vendida || 0);
-                const precioVenta = Number(item.precio_venta || 0);
-                const total = cantidad * precioVenta;
-                detallesFinales.push({
-                    id_venta: ventaDetalle.id_venta,
-                    folio_venta: ventaDetalle.folio || venta.folio || "",
-                    estado: ventaDetalle.estado || venta.estado || "",
-                    municipio: ventaDetalle.municipio || venta.municipio || "",
-                    cliente: ventaDetalle.cliente || venta.cliente || "Cliente no especificado",
-                    id_producto: item.id_producto,
-                    folio_producto: item.folio_producto || "",
-                    producto: item.descripcion || producto.descripcion || item.folio_producto || "Producto sin nombre",
-                    categoria: categoria,
-                    cantidad_vendida: cantidad,
-                    precio_venta: precioVenta,
-                    total: total
-                });
-            });
-        }
-        return detallesFinales;
     }
 
     function agruparVentasPorProducto(detalleVentas) {
@@ -567,26 +591,6 @@
         return Object.values(mapa).sort((a, b) => b.total - a.total);
     }
 
-    function agruparVentasMensuales(ventas) {
-        const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        const mapa = {};
-
-        ventas.forEach((venta) => {
-            const fechaRaw = venta.fecha_venta || venta.fecha || venta.fecha_creacion || "";
-            const fecha = parseFechaDDMMYYYY(fechaRaw);
-            const mesKey = `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}`;
-            const mesLabel = meses[fecha.getMonth()];
-
-            if (!mapa[mesKey]) {
-                mapa[mesKey] = { mes: mesLabel, total: 0, cantidad: 0 };
-            }
-            mapa[mesKey].total += Number(venta.precio_venta_final || 0);
-            mapa[mesKey].cantidad += 1;
-        });
-
-        return Object.values(mapa).sort((a,b) => a.mes.localeCompare(b.mes));
-    }
-
     function agruparVentasPorEstado(ventas) {
         const mapa = {};
         ventas.forEach((venta) => {
@@ -598,26 +602,6 @@
             mapa[estado].ventas += 1;
         });
         return Object.values(mapa).sort((a,b) => b.total - a.total);
-    }
-
-    function obtenerMasVendidosPorCategoria(detalleVentas) {
-        const mapa = {};
-        detalleVentas.forEach((item) => {
-            const categoria = item.categoria || "Sin categoría";
-            const producto = item.producto || "Producto sin nombre";
-            if (!mapa[categoria]) { mapa[categoria] = {}; }
-            if (!mapa[categoria][producto]) {
-                mapa[categoria][producto] = { categoria, producto, cantidad: 0, total: 0 };
-            }
-            mapa[categoria][producto].cantidad += Number(item.cantidad_vendida || 0);
-            mapa[categoria][producto].total += Number(item.total || 0);
-        });
-        const resultado = [];
-        Object.keys(mapa).forEach((categoria) => {
-            const productosCategoria = Object.values(mapa[categoria]).sort((a, b) => b.cantidad - a.cantidad);
-            if (productosCategoria.length > 0) { resultado.push(productosCategoria[0]); }
-        });
-        return resultado.sort((a, b) => b.cantidad - a.cantidad);
     }
 
     function actualizarCards({ ventas, productoMasVendido, lineaMasVendida, clientePrincipal }) {
@@ -652,41 +636,28 @@
         });
     }
 
-    // GRÁFICAS DASHBOARD (DIFERENTES A REPORTES)
+    // ========== GRÁFICAS REPORTES ==========
 
-    function renderChartVentasMensuales(data) {
-        const ctx = document.getElementById("chartVentasMensuales");
+    function renderChartVentasProducto(data) {
+        const ctx = document.getElementById("chartVentasProducto");
         if (!ctx) return;
-        if (chartVentasMensuales) chartVentasMensuales.destroy();
-        chartVentasMensuales = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: data.map((item) => item.mes),
-                datasets: [{
-                    label: "Total Vendido",
-                    data: data.map((item) => item.total),
-                    borderColor: "rgba(78, 115, 223, 1)",
-                    backgroundColor: "rgba(78, 115, 223, 0.1)",
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: opcionesGrafica("Tendencia Mensual", true)
-        });
-    }
-
-    function renderChartTopProductos(data) {
-        const ctx = document.getElementById("chartTopProductos");
-        if (!ctx) return;
-        if (chartTopProductos) chartTopProductos.destroy();
-        chartTopProductos = new Chart(ctx, {
+        if (chartVentasProducto) chartVentasProducto.destroy();
+        const topData = data.slice(0, 10);
+        const colores = [
+            "rgba(78, 115, 223, 0.8)", "rgba(28, 200, 138, 0.8)",
+            "rgba(246, 194, 62, 0.8)", "rgba(231, 74, 59, 0.8)",
+            "rgba(54, 185, 204, 0.8)", "rgba(133, 90, 206, 0.8)",
+            "rgba(246, 142, 62, 0.8)", "rgba(90, 184, 110, 0.8)",
+            "rgba(193, 74, 159, 0.8)", "rgba(110, 130, 150, 0.8)"
+        ];
+        chartVentasProducto = new Chart(ctx, {
             type: "bar",
             data: {
-                labels: data.map((item) => item.producto),
+                labels: topData.map((item) => item.producto),
                 datasets: [{
                     label: "Cantidad vendida",
-                    data: data.map((item) => item.cantidad),
-                    backgroundColor: ["rgba(28, 200, 138, 0.8)", "rgba(54, 185, 204, 0.8)", "rgba(246, 194, 62, 0.8)", "rgba(231, 74, 59, 0.8)", "rgba(78, 115, 223, 0.8)"],
+                    data: topData.map((item) => item.cantidad),
+                    backgroundColor: topData.map((_, i) => colores[i % colores.length]),
                     borderWidth: 1
                 }]
             },
@@ -694,39 +665,45 @@
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { title: { display: true, text: "Top 5 Productos" }, legend: { display: false } },
-                scales: { x: { beginAtZero: true } }
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { beginAtZero: true }
+                }
             }
         });
     }
 
-    function renderChartVentasCategoria(data) {
-        const ctx = document.getElementById("chartVentasCategoria");
+    function renderChartVentasLinea(data) {
+        const ctx = document.getElementById("chartVentasLinea");
         if (!ctx) return;
-        if (chartVentasCategoria) chartVentasCategoria.destroy();
-        chartVentasCategoria = new Chart(ctx, {
-            type: "polarArea",
+        if (chartVentasLinea) chartVentasLinea.destroy();
+        chartVentasLinea = new Chart(ctx, {
+            type: "bar",
             data: {
                 labels: data.map((item) => item.categoria),
                 datasets: [{
                     label: "Total vendido",
                     data: data.map((item) => item.total),
-                    backgroundColor: ["rgba(78, 115, 223, 0.7)", "rgba(28, 200, 138, 0.7)", "rgba(246, 194, 62, 0.7)", "rgba(231, 74, 59, 0.7)", "rgba(54, 185, 204, 0.7)"]
+                    backgroundColor: "rgba(246, 194, 62, 0.7)",
+                    borderColor: "rgba(246, 194, 62, 1)",
+                    borderWidth: 1
                 }]
             },
-            options: opcionesGrafica("Ventas por Categoría", false)
+            options: opcionesGrafica("Ventas por Línea / Categoría", true)
         });
     }
 
-    function renderChartVentasEstado(data) {
-        const ctx = document.getElementById("chartVentasEstado");
+    function renderChartVentasCliente(data) {
+        const ctx = document.getElementById("chartVentasCliente");
         if (!ctx) return;
-        if (chartVentasEstado) chartVentasEstado.destroy();
+        if (chartVentasCliente) chartVentasCliente.destroy();
         const topData = data.slice(0, 10);
-        chartVentasEstado = new Chart(ctx, {
+        chartVentasCliente = new Chart(ctx, {
             type: "bar",
             data: {
-                labels: topData.map((item) => item.estado),
+                labels: topData.map((item) => item.cliente),
                 datasets: [{
                     label: "Total vendido",
                     data: topData.map((item) => item.total),
@@ -735,8 +712,83 @@
                     borderWidth: 1
                 }]
             },
-            options: opcionesGrafica("Ventas por Estado", true)
+            options: opcionesGrafica("Ventas por Cliente", true)
         });
+    }
+
+    function renderVendidosPorCategoria(data) {
+        renderChartVendidosCategoria(data);
+        renderTablaVendidosCategoria(data);
+    }
+
+    function renderChartVendidosCategoria(data) {
+        const ctx = document.getElementById("chartVendidosCategoria");
+        if (!ctx) return;
+        if (chartVendidosCategoria) chartVendidosCategoria.destroy();
+        chartVendidosCategoria = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: data.map((item) => item.categoria),
+                datasets: [{
+                    label: "Cantidad vendida",
+                    data: data.map((item) => item.cantidad),
+                    backgroundColor: "rgba(231, 74, 59, 0.7)",
+                    borderColor: "rgba(231, 74, 59, 1)",
+                    borderWidth: 1
+                }]
+            },
+            options: opcionesGrafica("Más vendidos por categoría", true)
+        });
+    }
+
+    function renderTablaVendidosCategoria(data) {
+        const tbody = document.querySelector("#tablaVendidosCategoria tbody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4">Sin datos disponibles</td></tr>`;
+            return;
+        }
+        data.forEach((item) => {
+            tbody.innerHTML += `<tr><td>${item.categoria}</td><td>${item.producto}</td><td>${item.cantidad}</td><td>${formatoMoneda(item.total)}</td></tr>`;
+        });
+    }
+
+    async function renderStockMinimo() {
+        const tbody = document.querySelector("#tablaStockMinimo tbody");
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="7">Cargando datos...</td></tr>';
+        try {
+            const inventarios = await obtenerDatos("/api/inventarios/") || [];
+            const productosBajoStock = inventarios
+                .filter((inv) => {
+                    const stock = Number(inv.stock || 0);
+                    const minStock = Number(inv.min_stock || 0);
+                    return stock <= minStock;
+                })
+                .sort((a, b) => {
+                    const diffA = Number(a.stock || 0) - Number(a.min_stock || 0);
+                    const diffB = Number(b.stock || 0) - Number(b.min_stock || 0);
+                    return diffA - diffB;
+                });
+            tbody.innerHTML = "";
+            if (productosBajoStock.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-success font-weight-bold"><i class="fas fa-check-circle mr-2"></i>Todos los productos tienen stock suficiente</td></tr>`;
+                return;
+            }
+            productosBajoStock.forEach((inv) => {
+                const stock = Number(inv.stock || 0);
+                const minStock = Number(inv.min_stock || 0);
+                const diferencia = stock - minStock;
+                const estado = stock === 0
+                    ? '<span class="badge badge-danger">Sin stock</span>'
+                    : '<span class="badge badge-warning">Por debajo del mínimo</span>';
+                tbody.innerHTML += `<tr><td>${inv.folio_producto || inv.folio || ""}</td><td>${inv.descripcion_producto || inv.producto || inv.nombre_producto || `Producto ${inv.id_producto}`}</td><td>${inv.nombre_almacen || inv.almacen || `Almacén ${inv.id_almacen}`}</td><td class="font-weight-bold">${stock}</td><td>${minStock}</td><td class="font-weight-bold text-danger">${diferencia}</td><td>${estado}</td></tr>`;
+            });
+        } catch (error) {
+            console.error("Error al cargar stock mínimo:", error);
+            tbody.innerHTML = '<tr><td colspan="7" class="text-danger">Error al cargar datos</td></tr>';
+        }
     }
 
     function opcionesGrafica(titulo, mostrarEjes) {
