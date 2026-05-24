@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let idVentaEditando = null;
   let detalleVentaTemporal = [];
   let productoSeleccionadoId = null;
+  let productoSeleccionadoFull = null;
   let clienteSeleccionadoId = null;
   let stockPorProducto = {};
   let tipoCambio = null;
@@ -532,6 +533,7 @@ return `
                 step="0.01"
                 class="form-control form-control-sm detalle-precio"
                 value="${precioBase}"
+                readonly
               >
             </td>
             <td class="detalle-precio-iva">$${money(precioConIVA)}</td>
@@ -662,6 +664,7 @@ return `
     modo = "create";
     idVentaEditando = null;
     productoSeleccionadoId = null;
+    productoSeleccionadoFull = null;
 
     if (form) form.reset();
 
@@ -876,7 +879,7 @@ return `
       }
     } catch (error) {
       console.error("Error fetching exchange rate:", error);
-      await showError("No se pudo obtener el tipo de cambio. Intente manualmente.");
+      await showWarning("No se pudo obtener el tipo de cambio automáticamente. Ingresa el tipo de cambio manualmente en el campo de arriba.");
     } finally {
       btnFetchTipoCambio.disabled = false;
       btnFetchTipoCambio.innerHTML = '<i class="fas fa-sync-alt"></i> Obtener tipo de cambio';
@@ -1198,7 +1201,8 @@ return `
               productoSeleccionadoId = Number(p.id_producto);
               selectProductoVenta.value = `${p.folio || ""} - ${nombre}`;
               const prodCompleto = await getProductoAPI(p.id_producto);
-              populatePrecioDropdown(prodCompleto || p);
+              productoSeleccionadoFull = prodCompleto || p;
+              populatePrecioDropdown(productoSeleccionadoFull);
               dropdown.style.display = "none";
               
               // Load warehouses that have stock for this product
@@ -1368,6 +1372,9 @@ return `
         const tasa = tipoCambio || Number(inpTipoCambio.value) || 0;
         if (tasa > 0) {
           precioFinal = Number((precio * tasa).toFixed(2));
+        } else {
+          await showWarning("Debes ingresar el tipo de cambio antes de agregar un producto en USD. Usa el botón 'Obtener tipo de cambio' o ingrésalo manualmente.");
+          return;
         }
       }
 
@@ -1533,25 +1540,8 @@ return `
   if (inpTipoCambio) {
     inpTipoCambio.addEventListener("input", () => {
       tipoCambio = Number(inpTipoCambio.value) || null;
-      if (productoSeleccionadoId) {
-        const dropdown = document.getElementById("dropdownProductosVenta");
-        if (dropdown) {
-          const items = dropdown.querySelectorAll(".dropdown-item");
-          for (const item of items) {
-            if (Number(item.getAttribute("data-id")) === productoSeleccionadoId) {
-              const p = {
-                id_producto: Number(item.getAttribute("data-id")),
-                folio: item.getAttribute("data-folio"),
-                costo: Number(item.getAttribute("data-costo")),
-                precios: JSON.parse(item.getAttribute("data-precios") || "[0]"),
-                moneda: item.getAttribute("data-moneda"),
-                descripcion: item.getAttribute("data-nombre")
-              };
-              populatePrecioDropdown(p);
-              break;
-            }
-          }
-        }
+      if (productoSeleccionadoId && productoSeleccionadoFull) {
+        populatePrecioDropdown(productoSeleccionadoFull);
       }
 
       let huboCambio = false;
