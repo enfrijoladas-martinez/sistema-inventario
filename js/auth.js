@@ -56,7 +56,7 @@ function init() {
 
 function ocultarMenusAdmin() {
     const collapseLinks = document.querySelectorAll(".collapse-item");
-    const allowedPages = ["productos.html", "clientes.html", "reportes.html", "index.html"];
+    const allowedPages = PAGINAS_EMPLEADO;
     
     let visibleCount = 0;
     
