@@ -111,8 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function eliminarAlmacenAPI(idAlmacen) {
     return await apiFetch(`/api/almacenes/${idAlmacen}`, {
-      method: "DELETE",
-      headers: { "Content-Type": undefined }
+      method: "DELETE"
     });
   }
 
