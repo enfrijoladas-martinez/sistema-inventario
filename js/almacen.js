@@ -432,6 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
         title: `Mover inventario de "${folio}"`,
         html: `
           <p class="mb-3">Este almacén tiene <strong>${invDelAlmacen.length} registro(s)</strong> de inventario.</p>
+          <p class="mb-2 text-warning"><strong>Los inventarios se moverán al almacén que seleccione.</strong></p>
           <p class="mb-2">Seleccione el almacén de destino:</p>
           <select id="destinoAlmacen" class="form-control">
             <option value="">Seleccionar...</option>
