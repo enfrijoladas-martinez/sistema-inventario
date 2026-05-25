@@ -44,19 +44,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function apiFetch(endpoint, options = {}) {
     const token = localStorage.getItem("token");
+    const { headers: optHeaders, auth, ...restOptions } = options;
     const headers = {
       "Content-Type": "application/json",
       ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-      ...(options.headers || {})
+      ...(optHeaders || {})
     };
     
-    if (options.auth === false) {
+    if (auth === false) {
       delete headers["Authorization"];
     }
 
     const response = await fetch(`${API_BASE}${endpoint}`, {
       headers,
-      ...options
+      ...restOptions
     });
 
     const data = await response.json().catch(() => null);
@@ -109,9 +110,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  async function eliminarAlmacenAPI(idAlmacen) {
+  async function eliminarAlmacenAPI(idAlmacen, destinoId) {
     return await apiFetch(`/api/almacenes/${idAlmacen}`, {
-      method: "DELETE"
+      method: "DELETE",
+      body: JSON.stringify({ id_almacen_destino: destinoId ?? null })
     });
   }
 
@@ -421,17 +423,21 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // CASE 2: Has inventory and there are other warehouses — offer to move
-    if (invDelAlmacen.length > 0) {
+    // If there are other warehouses — offer to select destination
+    if (otrosAlmacenes.length > 0) {
       const opciones = otrosAlmacenes.map(
         (a) => `<option value="${a.id_almacen}">${a.folio || ""} - ${a.nombre || ""}</option>`
       ).join("");
 
+      const msgInv = invDelAlmacen.length > 0
+        ? `<p class="mb-3">Este almacén tiene <strong>${invDelAlmacen.length} registro(s)</strong> de inventario.</p>
+           <p class="mb-2 text-warning"><strong>Los inventarios se moverán al almacén que seleccione.</strong></p>`
+        : `<p class="mb-3">Este almacén no tiene inventarios registrados.</p>`;
+
       const result = await Swal.fire({
-        title: `Mover inventario de "${folio}"`,
+        title: `Eliminar "${folio}"`,
         html: `
-          <p class="mb-3">Este almacén tiene <strong>${invDelAlmacen.length} registro(s)</strong> de inventario.</p>
-          <p class="mb-2 text-warning"><strong>Los inventarios se moverán al almacén que seleccione.</strong></p>
+          ${msgInv}
           <p class="mb-2">Seleccione el almacén de destino:</p>
           <select id="destinoAlmacen" class="form-control">
             <option value="">Seleccionar...</option>
@@ -440,7 +446,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `,
         icon: "warning",
         showCancelButton: true,
-        confirmButtonText: "Mover y eliminar",
+        confirmButtonText: "Eliminar",
         cancelButtonText: "Cancelar",
         confirmButtonColor: "#d33",
         cancelButtonColor: "#6c757d",
@@ -457,41 +463,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!result.isConfirmed) return;
 
-      const destinoId = result.value;
-      const destinoAlmacen = otrosAlmacenes.find(a => Number(a.id_almacen) === destinoId);
-      const destinoNombre = destinoAlmacen ? (destinoAlmacen.nombre || destinoAlmacen.folio || "Destino") : "Destino";
-
-      const confirmar = await Swal.fire({
-        title: "¿Confirmar movimiento?",
-        html: `
-          <p>Se moverán <strong>${invDelAlmacen.length} registro(s)</strong> de inventario</p>
-          <p>Desde: <strong>${folio}</strong></p>
-          <p>Hacia: <strong>${destinoNombre}</strong></p>
-          <p class="text-warning mt-3 mb-0">Luego se eliminará el almacén origen.</p>
-        `,
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonText: "Sí, mover y eliminar",
-        cancelButtonText: "Cancelar",
-        confirmButtonColor: "#d33",
-        reverseButtons: true
-      });
-
-      if (!confirmar.isConfirmed) return;
-
       try {
-        // Move all inventory records to destination warehouse
-        for (const inv of invDelAlmacen) {
-          await actualizarInventarioAPI(inv.id_inventario, {
-            id_producto: inv.id_producto,
-            id_almacen: destinoId,
-            stock: inv.stock,
-            min_stock: inv.min_stock
-          });
-        }
-
-        // Delete the warehouse
-        await eliminarAlmacenAPI(idAlmacen);
+        await eliminarAlmacenAPI(idAlmacen, result.value);
         almacenesPorProducto = null;
         productoFiltroId = null;
         if (inputBuscarProducto) inputBuscarProducto.value = "";
@@ -501,21 +474,21 @@ document.addEventListener("DOMContentLoaded", () => {
         await Swal.fire({
           icon: "success",
           title: "Completado",
-          text: `Se movieron ${invDelAlmacen.length} registro(s) de inventario y se eliminó el almacén.`,
+          text: `Almacén eliminado correctamente.`,
           confirmButtonText: "Aceptar"
         });
       } catch (err) {
         await Swal.fire({
           icon: "error",
           title: "Error",
-          text: `Error al mover inventario: ${err.message}`,
+          text: `Error al eliminar: ${err.message}`,
           confirmButtonText: "Aceptar"
         });
       }
       return;
     }
 
-    // CASE 3: No inventory — normal delete confirmation
+    // No other warehouses and no inventory — confirm then delete
     const result = await Swal.fire({
       icon: "warning",
       title: "¿Estás seguro?",
@@ -530,7 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!result.isConfirmed) return;
 
     try {
-      await eliminarAlmacenAPI(idAlmacen);
+      await eliminarAlmacenAPI(idAlmacen, null);
       almacenesPorProducto = null;
       productoFiltroId = null;
       if (inputBuscarProducto) inputBuscarProducto.value = "";
