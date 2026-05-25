@@ -425,7 +425,7 @@ async function abrirEditarProducto(idProducto) {
 
 
 async function eliminarProducto(idProducto) {
-    const confirmado = await confirmarAccion("El producto será eliminado. También se eliminarán todos los inventarios asociados a este producto.");
+    const confirmado = await confirmarAccion("El producto será eliminado. También se eliminarán todos los inventarios asociados a este producto. Las ventas de este producto se asignarán a \"Producto genérico\".");
 
     if (!confirmado) return;
 
