@@ -557,8 +557,8 @@ function recalcularPrecios() {
       const margen = Number(document.getElementById(`margen${i}Prod`)?.value) || 0;
       const el = document.getElementById(`precio${i}Calc`);
       if (!el) continue;
-      if (costo > 0 && margen > 0) {
-        const precio = costo * (1 + margen / 100);
+      if (costo > 0 && margen > 0 && margen < 100) {
+        const precio = costo / (1 - margen / 100);
         el.textContent = `${formatoMoneda(precio)} ${moneda}`;
       } else {
         el.textContent = "$0.00";
