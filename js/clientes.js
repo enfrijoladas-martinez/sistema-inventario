@@ -252,8 +252,8 @@ document.addEventListener("DOMContentLoaded", () => {
       nombre: c.nombre || "",
       apellido_paterno: c.apellido_paterno || "",
       apellido_materno: c.apellido_materno || "",
-      telefono: c.telefono || "",
-      email: c.email || "",
+      telefono: c.telefono || null,
+      email: c.email || null,
       id_estado: c.id_estado || null,
       id_municipio: c.id_municipio || null,
       categorias_ids: (c.categorias || []).map(cat => cat.id_categoria ?? cat.id_categoria ?? cat.id_cat ?? cat)
@@ -382,8 +382,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const apMat = inpApMat.value.trim();
     const idEstado = selectEstado.value ? Number(selectEstado.value) : null;
     const idMunicipio = selectMunicipio.value ? Number(selectMunicipio.value) : null;
-    const tel = inpTel.value.replace(/\D/g, "");
-    const email = inpEmail.value.trim();
+    const tel = inpTel.value.replace(/\D/g, "") || null;
+    const email = inpEmail.value.trim() || null;
     const nuevasCategorias = (categoriasTemporales?.length > 0) ? categoriasTemporales : [];
 
     let cliente;
