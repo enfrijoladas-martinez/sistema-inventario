@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const API_BASE = "http://146.190.165.82";
+  const API_BASE = "https://servicioagromundo.be";
 
   const tbody = document.querySelector("#dataTable tbody");
   const inputBuscar = document.getElementById("buscarUsuarios");

@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const API_BASE = "http://146.190.165.82/api";
+  const API_BASE = "https://servicioagromundo.be/api";
 
   const btnGuardar = document.getElementById("btnGuardarVenta");
   const btnAgregarDetalle = document.getElementById("btnAgregarDetalleVenta");

@@ -1,4 +1,4 @@
-const API_URL = "http://146.190.165.82";
+const API_URL = "https://servicioagromundo.be";
 const KEY_TOKEN = "token";
 const KEY_USUARIO = "usuarioLogueado";
 

@@ -1,4 +1,4 @@
-const API_BASE = "http://146.190.165.82";
+const API_BASE = "https://servicioagromundo.be";
 
 let productos = [];
 let categoriasDisponibles = [];
